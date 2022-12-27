@@ -163,6 +163,13 @@ class ShiftTableWidget(QWidget):
     def onSelectionChanged(self, selected, deselected):
         cols = self.rowHeaderView.model().columnCount()
         rows = self.columnHeaderView.model().rowCount()
+        for ix in deselected.indexes():
+            for col in range(cols):
+                index = self.rowHeaderView.model().index(ix.row(), col ,QModelIndex())
+                self.rowHeaderView.model().setData(index, False, Qt.FontRole)                
+            for row in range(rows):
+                index = self.columnHeaderView.model().index(row, ix.column(), QModelIndex())
+                self.columnHeaderView.model().setData(index, False, Qt.FontRole)
         for ix in selected.indexes():
             # emphasize column,row header 
             for col in range(cols):
@@ -171,13 +178,7 @@ class ShiftTableWidget(QWidget):
             for row in range(rows):
                 index = self.columnHeaderView.model().index(row, ix.column(), QModelIndex())
                 self.columnHeaderView.model().setData(index, True, Qt.FontRole)
-        for ix in deselected.indexes():
-            for col in range(cols):
-                index = self.rowHeaderView.model().index(ix.row(), col ,QModelIndex())
-                self.rowHeaderView.model().setData(index, False, Qt.FontRole)                
-            for row in range(rows):
-                index = self.columnHeaderView.model().index(row, ix.column(), QModelIndex())
-                self.columnHeaderView.model().setData(index, False, Qt.FontRole)
+
                 
 class BaseView(QTableView):
     def __init__(self, parent=None, *args):
