@@ -1,0 +1,18 @@
+A夜:#7FFFD4 Aquamarine
+M夜:#7FFFD4 Aquamarine
+C夜:#7FFFD4 Aquamarine
+明:#00FF00  Lime
+A日:#FFFF00 Yellow
+M日:#FFFF00 Yellow
+C日:#FFFF00 Yellow
+F日:#FFFF00 Yellow
+
+勤:#228B22 ForestGreen
+張:#9400D3 BlueViolet
+
+休:#808080 Gray
+年:#FFC0CB Pink
+特:#D2691E Chocolate
+夏:#F4A460 SandyBrown
+半:#FFDAB9 PeachPuff
+
