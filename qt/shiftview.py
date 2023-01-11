@@ -22,15 +22,19 @@ modalityColors = {'RT':QColor('#99ccff'), 'MR':QColor('#99FFFF'), 'TV':QColor('#
                   'FR':QColor('#F5F5F5'), 'AS':QColor('#D3D3D3'), 'ET':QColor('#A9A9A9')}
 
 class ShiftTableWidget(QWidget):
-    def __init__(self):
+    def __init__(self, shiftModel, rowHeaderModel, columnHeaderModel, countModel, data):
         QWidget.__init__(self)
 
-        data = datamodel.DataModel()
+        # data = datamodel.DataModel()
         
-        self.rowHeaderModel = RowHeaderModel(data.staffinfo)
-        self.columnHeaderModel = ColumnHeaderModel(data.header, data.closed)
-        self.shiftModel = ShiftModel(data.shiftdf, data.previousdf, data.requestdf)
-        self.countModel = CountModel(data.counttable)
+        # self.rowHeaderModel = RowHeaderModel(data.staffinfo)
+        # self.columnHeaderModel = ColumnHeaderModel(data.header, data.closed)
+        # self.shiftModel = ShiftModel(data.shiftdf, data.previousdf, data.requestdf)
+        # self.countModel = CountModel(data.counttable)
+        self.rowHeaderModel = rowHeaderModel
+        self.columnHeaderModel = columnHeaderModel
+        self.shiftModel = shiftModel
+        self.countModel = countModel
 
         self.columnHeaderView = BaseView()
         self.columnHeaderView.setModel(self.columnHeaderModel)
@@ -50,6 +54,7 @@ class ShiftTableWidget(QWidget):
         self.shiftView.setSelectionMode(QAbstractItemView.SingleSelection)
         self.shiftView.setEditTriggers(QAbstractItemView.CurrentChanged)
         self.shiftView.setItemDelegate(ShiftDelegate())
+        self.shiftView.model().dataChanged.connect(self.onDataChanged)
 
         self.scrollView = BaseView()
         self.scrollView.hide()
@@ -179,8 +184,18 @@ class ShiftTableWidget(QWidget):
                 index = self.columnHeaderView.model().index(row, ix.column(), QModelIndex())
                 self.columnHeaderView.model().setData(index, True, Qt.FontRole)
 
+    def onDataChanged(self, index):  
+        row = index.row()
+        column = index.column()
+        data = self.shiftView.model()._data.iat[index.row(), index.column()]
+        uid = self.shiftView.model().headerData(row, Qt.Vertical, Qt.DisplayRole)
+        date = self.shiftView.model().headerData(column, Qt.Horizontal, Qt.DisplayRole)
+
+        print(f'{row}___{column}__{data}__{uid}___{date}')
                 
 class BaseView(QTableView):
+    
+
     def __init__(self, parent=None, *args):
         super().__init__()
         
@@ -338,6 +353,7 @@ class ColumnHeaderModel(TableModel):
 
 
 class ShiftModel(TableModel):
+
     def __init__(self, data, previous, request, parent=None, *args):
         super().__init__(self, data, parent, *args)
         self._data = data
@@ -386,6 +402,7 @@ class ShiftModel(TableModel):
             self._data.iat[index.row(), index.column()] = value
             self._color.iat[index.row(), index.column()] = shiftColors[value]
             self.dataChanged.emit(index, index)
+
             return True
 
         return False    
@@ -433,22 +450,24 @@ class ShiftModel(TableModel):
 
 
 class ShiftDelegate(QStyledItemDelegate):
+    
     def __init__(self, parent=None):
         super(ShiftDelegate, self).__init__(parent)
-    
+        self.initvalue = ''
+        
     def createEditor(self, parent, option, index):
         if index.model().previous_request(index):
             editor = QComboBox()
             editor.setParent(parent)
-        
-            # editor.setFrame(False)
+
             return editor
         else:
             return None
 
     def setEditorData(self, editor, index):
         shifts = ['休', '勤', 'A日', 'M日', 'C日', 'F日', 'A夜', 'M夜', 'C夜', '明']
-        initval = index.model().data(index, Qt.DisplayRole)
+        
+        self.initvalue = index.model().data(index, Qt.DisplayRole)
         model = editor.model()       
         for item in shifts:
             stdItem = QStandardItem()
@@ -456,12 +475,14 @@ class ShiftDelegate(QStyledItemDelegate):
             stdItem.setText(item)
             model.appendRow(stdItem)    
             # editor.addItem(stdItem)
-        editor.setCurrentIndex(editor.findText(initval))
+        editor.setCurrentIndex(editor.findText(self.initvalue))
 
     def setModelData(self, editor, model, index):
-        
+
         value = editor.currentText()
-        model.setData(index, value, Qt.EditRole)
+        # comboboxのindexを変更していれば　⇒　値を編集していればmodelのsetDataへ
+        if not editor.currentIndex() < 0:
+            model.setData(index, value, Qt.EditRole)
 
 class CountModel(TableModel):
     def __init__(self, data, parent=None, *args):
