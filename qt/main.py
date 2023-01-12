@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtWidgets, QtCore, QtGui
 import shiftview, datamodel
+import pyodbc
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent = None) -> None:
