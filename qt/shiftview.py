@@ -22,7 +22,7 @@ modalityColors = {'RT':QColor('#99ccff'), 'MR':QColor('#99FFFF'), 'TV':QColor('#
                   'FR':QColor('#F5F5F5'), 'AS':QColor('#D3D3D3'), 'ET':QColor('#A9A9A9')}
 
 class ShiftTableWidget(QWidget):
-    def __init__(self, shiftModel, rowHeaderModel, columnHeaderModel, countModel, data):
+    def __init__(self, shiftModel, rowHeaderModel, columnHeaderModel, countModel):
         QWidget.__init__(self)
 
         # data = datamodel.DataModel()
@@ -69,7 +69,7 @@ class ShiftTableWidget(QWidget):
         self.countView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
 
         self.nameView = BaseView()
-        self.nameView.setModel(self.setHeaderName(data.yyyymm))
+        self.nameView.setModel(self.setHeaderName())
         self.nameView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.setColumnWidth()
@@ -95,9 +95,8 @@ class ShiftTableWidget(QWidget):
         self.setContentsMargins(5, 0, 0, 0)
         self.setMinimumSize(1000, 400)
 
-    def setHeaderName(self, date):
-        date = date       
-        name = pd.DataFrame(data=[[date[:7], '', '', '休日'],
+    def setHeaderName(self):
+        name = pd.DataFrame(data=[['', '', '', '休日'],
                                   ['', '', '', ''],
                                   ['UID', 'ID', '氏名', '所属']])
         nameHeader = TableModel(name)
@@ -185,6 +184,10 @@ class ShiftTableWidget(QWidget):
                 self.columnHeaderView.model().setData(index, True, Qt.FontRole)
 
     def onDataChanged(self, index):  
+        '''
+        ここに休日などをカウントする関数を記述する
+        '''
+
         row = index.row()
         column = index.column()
         data = self.shiftView.model()._data.iat[index.row(), index.column()]
