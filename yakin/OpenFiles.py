@@ -2,6 +2,8 @@ import datetime
 import pandas as pd
 import math
 
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 def config():#勤務表作成における必要変数を格納
     #ShiftManager ⇒　20221220/sample1
     # fti = pd.read_table("C:/Users/pelu0/Desktop/20221220/sample1/configvar.dat")
@@ -168,10 +170,12 @@ def kinmuhyou():
     dfprevious_dfshift = pd.concat([dfprevious, dfshift])
     # print('non')
     # print(dfprevious_dfshift)
+    # 重複した行を削除
     longday = dfprevious_dfshift.loc[:, ['Date']].drop_duplicates().dropna(subset=['Date'])
-
+    # print(dfprevious_dfshift)
+    '''日付（数値）のリスト'''
     longday = longday["Date"].to_list()     # 前月分を含めた日付のリストを取得する
-
+    # print(longday)
 
     # 基準日から日付計算
     for i in range(len(dfprevious_dfshift)):
@@ -183,9 +187,10 @@ def kinmuhyou():
         dfprevious_dfshift.iat[i, 1] = dfprevious_dfshift.iat[i, 1].strftime('%m/%d')
     
     # 列名(日付)日付ダブり削除＋Nan削除
+    '''日付のリスト'''
     list_cols = dfprevious_dfshift.loc[:, ['Date']].drop_duplicates().dropna(subset=['Date'])
     list_cols = list_cols["Date"].to_list()
-
+    # print(list_cols)
     # DataFrame(先月+今月)
     number_of_stuff, staff_list, dfstaff = stuff()      # スタッフ数，UIDリスト，[UID, ID, Name]のリスト
     # index=UIDとカラム=日付を設定した空のデータフレームを用意する
@@ -229,6 +234,9 @@ def kinmuhyou():
         dfkinmuhyou.iat[i, 1] = dfkinmuhyou.iat[i, 1].strftime('%m/%d')
     #DataFrame
     number_of_stuff, staff_list, dfstaff = stuff()
+    
+    print(staff_list)
+    # print(dfkinmuhyou)
     DFkinmuhyou = pd.DataFrame(index=staff_list, columns=list_cols)
 
     for i in range(len(dfconverttable)):
@@ -243,7 +251,7 @@ def kinmuhyou():
 
     DFkinmuhyou.index = list_row1
     # DFkinmuhyou.to_csv("C:/Users/pelu0/Desktop/20221220/sample1/DFkinmuhyou.csv", encoding='Shift_JIS')
-    # print(DFkinmuhyou)
+    print(DFkinmuhyou)
     #DFkinmuhyou = DFkinmuhyou.replace({0: "A日", 1: "M日", 2: "C日", 3: "F日", 4: "A夜", 5: "M夜", 6: "C夜", 7: "明", 8: "日勤", 9: "他勤"})
     #DFkinmuhyou = DFkinmuhyou.replace({10: "休日", 11: "休暇", 12: "ダ"} )
 
@@ -294,22 +302,22 @@ def main():
     # a, b, c = config()
     # ed, dfshift, DFyakinhyou, data_list = shift()
     # dfskill, dfjob1, DFrenzoku = Skill()
-    # DFkinmuhyou, DFkinmuhyou_long, longday = kinmuhyou()
-    DFNrdeptcore,RawDFNrdeptcore = Nrdeptcore()
-    print(RawDFNrdeptcore)
+    DFkinmuhyou, DFkinmuhyou_long, longday = kinmuhyou()
+    # DFNrdeptcore,RawDFNrdeptcore = Nrdeptcore()
+    # print(RawDFNrdeptcore)
         # 各モダリティのコアメンバー抽出
-    DFRTCore = RawDFNrdeptcore.query('RT== 6 ')
-    DFMRCore = RawDFNrdeptcore.query('MR== 6 ')
-    DFTVCore = RawDFNrdeptcore.query('TV== 6 ')
-    DFKSCore = RawDFNrdeptcore.query('KS== 6 ')
-    DFNMCore = RawDFNrdeptcore.query('NM== 6 ')
-    DFXPCore = RawDFNrdeptcore.query('XP== 6 ')
-    DFCTCore = RawDFNrdeptcore.query('CT== 6 ')
-    DFXOCore = RawDFNrdeptcore.query('XO== 6 ')
-    DFAGCore = RawDFNrdeptcore.query('AG== 6 ')
-    DFMGCore = RawDFNrdeptcore.query('MG== 6 ')
-    DFMTCore = RawDFNrdeptcore.query('MT== 6 ')
-    print(DFRTCore)
+    # DFRTCore = RawDFNrdeptcore.query('RT== 6 ')
+    # DFMRCore = RawDFNrdeptcore.query('MR== 6 ')
+    # DFTVCore = RawDFNrdeptcore.query('TV== 6 ')
+    # DFKSCore = RawDFNrdeptcore.query('KS== 6 ')
+    # DFNMCore = RawDFNrdeptcore.query('NM== 6 ')
+    # DFXPCore = RawDFNrdeptcore.query('XP== 6 ')
+    # DFCTCore = RawDFNrdeptcore.query('CT== 6 ')
+    # DFXOCore = RawDFNrdeptcore.query('XO== 6 ')
+    # DFAGCore = RawDFNrdeptcore.query('AG== 6 ')
+    # DFMGCore = RawDFNrdeptcore.query('MG== 6 ')
+    # DFMTCore = RawDFNrdeptcore.query('MT== 6 ')
+    # print(DFRTCore)
     # print(longday)
 if __name__ == '__main__':
     main()

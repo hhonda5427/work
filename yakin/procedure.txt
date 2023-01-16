@@ -1,0 +1,8 @@
+1 ダブルクリックした日付を取得　targetDayS
+2 targetDaySの翌日を取得　targetDayE
+3 targetDayS_Eを使用してDFkinmuhyouの絞り込みを行う
+  DFkinmuhyou index=name, column=date(previous + request)
+
+
+DFkinmuhyou
+ previous, request, shift
