@@ -119,8 +119,13 @@ class DatReader(Members):
         """
 
         self.dat2Member(DatNames.shift, self.now_next_month)
-        self.dat2Member(DatNames.previous, self.previous_month)
+        mindate = self.dat2Member(DatNames.previous, self.previous_month)
         self.dat2Member(DatNames.request, self.now_next_month)
+        print(self.day_previous_next )
+
+
+        self.day_previous_next = self.day_previous_next[self.day_previous_next.index((self.date.year, self.date.month, self.date.day, self.date.weekday()))-mindate-1:]
+
 
         return self
 
@@ -131,18 +136,22 @@ class DatReader(Members):
             readingDat = open(self.rootPath + "\\" +
                               readDatName.value, 'r', encoding='utf-8-sig')
 
+        mindate = 0
         for row in readingDat:
+            
             try:
                 uid, day, job = row.rstrip('\n').split(',')
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
                 # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
+                mindate = min(mindate, int(day))
+
                 if not date in self.day_previous_next:
                     raise damagedDataError
 
             except damagedDataError as ex:
                 print(
-                    '*.datのdayがカレンダーと一致しませんでした。\n詳細: {ex}\nスキップして次を読み込みます...')
+                    f'*.datのdayがカレンダーと一致しませんでした。\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
             except IndexError as ex:
                 print(f'{ex}\n{readDatName}\n {int(day)}')
@@ -165,6 +174,7 @@ class DatReader(Members):
                     self.members[int(uid)].requestPerDay[date] = job
 
         readingDat.close()
+        return mindate
 
     def readNrdeptcore(self, datPath: str = ''):
         """

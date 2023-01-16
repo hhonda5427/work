@@ -8,14 +8,17 @@ from view.mainWindow import MainWindow
 from view.view import *
 from controller.delegate import modelEditDelegate
 
-app = QtWidgets.QApplication(sys.argv)
+# app = QtWidgets.QApplication(sys.argv)
 shiftCtrl = ShiftController('PyQtPractice\data')
 shiftChannel = ShiftChannel(shiftCtrl)
-view = TestView()
+print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
+print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))
 
-delegate = modelEditDelegate()
+# view = TestView()
 
-testWindow = MainWindow(view, shiftChannel, delegate)
-testWindow.show()
+# delegate = modelEditDelegate()
 
-sys.exit(app.exec_())
+# testWindow = MainWindow(view, shiftChannel, delegate)
+# testWindow.show()
+
+# sys.exit(app.exec_())

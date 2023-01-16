@@ -13,6 +13,7 @@ from database.member import Members
 class DataName(Enum):
     kinmu = auto()
     request = auto()
+    previous = auto()
 
 
 class DataSender(Members):
@@ -72,8 +73,21 @@ class DataSender(Members):
 
         """
         if dataName == DataName.kinmu:
-            df = pd.DataFrame({uid: person.jobPerDay for uid,
-                              person in self.members.items()})
+            #3月は空，4月～5月1日まで
+            dictionary = {}
+            for uid, person in self.members.items():
+                dictionary[uid] = {day: job if day >= (self.date.year, self.date.month, self.date.day) else None for day, job in person.jobPerDay.items() }
+            df = pd.DataFrame(dictionary)
+        if dataName == DataName.previous:
+            dictionary = {}
+
+            for uid, person in self.members.items():
+                
+                dictionary[uid] = {day: job if day < (self.date.year, self.date.month, self.date.day) else None for day, job in person.jobPerDay.items() }
+            print(dictionary)
+            df = pd.DataFrame(dictionary)
+
+
         elif dataName == DataName.request:
             df = pd.DataFrame({uid: person.requestPerDay for uid,
                               person in self.members.items()})
@@ -88,8 +102,7 @@ class DataSender(Members):
             UID 職員ID name depf(モダリティ)
         UID *value
         """
-        df = pd.DataFrame({uid: {'uid': uid, 'staffID': person.staffid, '名前': person.name,
-                          'モダリティ': person.dept} for uid, person, in self.members.items()})
+        df = pd.DataFrame({uid: { '名前': person.name,'モダリティ': person.dept} for uid, person, in self.members.items()})
         logging.debug(df.T)
         return df.T
 
