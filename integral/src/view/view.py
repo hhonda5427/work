@@ -273,11 +273,11 @@ class TableModel(QAbstractTableModel):
         return False    
 
 class RowHeaderModel(TableModel):
-    def __init__(self, data, parent=None, *args):
+    def __init__(self, data, shiftChannel:ShiftChannel, parent=None, *args):
         super().__init__(self, data, parent, *args)
-        self._data = data
-        self._font = [False for i in range(len(data))]
-        self._color = [QColor('#00000000') for i in range(len(data))]
+        self._data = shiftChannel.shiftCtrl.getStaffInfo()
+        self._font = [False for i in range(len(self._data))]
+        self._color = [QColor('#00000000') for i in range(len(self._data))]
 
         self.setColor()
 
@@ -367,14 +367,15 @@ class ShiftModel(TableModel):
 
     changeTrigger = pyqtSignal(QModelIndex, str, str)
 
-    def __init__(self, data, shiftCtrlChannel: ShiftChannel, previous, request, parent=None, *args):
+    # def __init__(self, data, shiftCtrlChannel: ShiftChannel, previous, request, parent=None, *args):
+    def __init__(self, data, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
         super().__init__(self, data, parent, *args)
         self._data = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         # self._previous = previous
         self._previous = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.previous)
         # self._request = request
         self._request = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.request)
-        self.rowHeader = data.index.values #shiftのindexの値を配列にする
+        self.rowHeader = self._data.index.values #shiftのindexの値を配列にする
         
         self._color = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._data.columns))] for i in range(len(self._data))])
         self._textColor = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._data.columns))] for i in range(len(self._data))])
@@ -386,6 +387,7 @@ class ShiftModel(TableModel):
     def data(self, index: QModelIndex, role=Qt.ItemDataRole):
         if not index.isValid():
             return None
+        # print(f'{index.row()}___{index.column()}')
         value = self._data.iat[index.row(), index.column()]
         previous = self._previous.iat[index.row(), index.column()]
         request = self._request.iat[index.row(), index.column()]
@@ -410,6 +412,7 @@ class ShiftModel(TableModel):
         return None  
 
     def setData(self, index, value, role=Qt.EditRole):
+        
         previous = self._previous.iat[index.row(), index.column()]
         request = self._request.iat[index.row(), index.column()]        
         if previous is not None or request is not None:

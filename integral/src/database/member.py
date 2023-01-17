@@ -33,7 +33,7 @@ class Members:
 
     # 全職員で共通な情報
     # (year, month, day, dayofweek) のtupleにする
-    date: datetime
+    date: datetime.datetime
     #                        [( 年,  月,  日, 曜日)]
     previous_month: list[tuple[int, int, int, int]]
     now_month: list[tuple[int, int, int, int]]
@@ -42,3 +42,7 @@ class Members:
 
     def __init__(self):
         self.members = {}
+
+    def getDateStr(self)->str:
+        return f"{self.date.year}-{self.date.month}-{self.date.day}"
+

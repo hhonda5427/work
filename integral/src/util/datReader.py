@@ -62,9 +62,10 @@ class DatReader(Members):
         # 日付データを設定
         self.date: datetime.datetime = datetime.datetime.strptime(
             *data['date'], '%Y/%m/%d')
+        
         cal = calendar.Calendar()
         self.previous_month = [datetuple for datetuple in cal.itermonthdays4(
-            self.date.year, self.date.month-1) if datetuple[1] == self.date.month - 1]
+            self.date.year, self.date.month-1) if datetuple[1] == self.date.month - 1][-int(data['iota'][0]):]
         self.now_month = [datetuple for datetuple in cal.itermonthdays4(
             self.date.year, self.date.month) if datetuple[1] == self.date.month]
         self.next_month = [datetuple for datetuple in cal.itermonthdays4(
@@ -119,12 +120,12 @@ class DatReader(Members):
         """
 
         self.dat2Member(DatNames.shift, self.now_next_month)
-        mindate = self.dat2Member(DatNames.previous, self.previous_month)
+        self.dat2Member(DatNames.previous, self.previous_month)
         self.dat2Member(DatNames.request, self.now_next_month)
-        print(self.day_previous_next )
+        # print(self.day_previous_next )
 
 
-        self.day_previous_next = self.day_previous_next[self.day_previous_next.index((self.date.year, self.date.month, self.date.day, self.date.weekday()))-mindate-1:]
+        # self.day_previous_next = self.day_previous_next[self.day_previous_next.index((self.date.year, self.date.month, self.date.day, self.date.weekday()))-mindate-1:]
 
 
         return self
@@ -136,7 +137,6 @@ class DatReader(Members):
             readingDat = open(self.rootPath + "\\" +
                               readDatName.value, 'r', encoding='utf-8-sig')
 
-        mindate = 0
         for row in readingDat:
             
             try:
@@ -144,7 +144,6 @@ class DatReader(Members):
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
                 # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
-                mindate = min(mindate, int(day))
 
                 if not date in self.day_previous_next:
                     raise damagedDataError
@@ -174,7 +173,6 @@ class DatReader(Members):
                     self.members[int(uid)].requestPerDay[date] = job
 
         readingDat.close()
-        return mindate
 
     def readNrdeptcore(self, datPath: str = ''):
         """

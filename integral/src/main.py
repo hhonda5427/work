@@ -1,5 +1,6 @@
 import logging
 import sys
+from PyQt5.QtWidgets import QApplication
 from database.model4Kinmu import Model4Kinmu
 
 
@@ -8,17 +9,16 @@ from view.mainWindow import MainWindow
 from view.view import *
 from controller.delegate import modelEditDelegate
 
-# app = QtWidgets.QApplication(sys.argv)
-shiftCtrl = ShiftController('PyQtPractice\data')
+app = QApplication(sys.argv)
+shiftCtrl = ShiftController('integral\data')
 shiftChannel = ShiftChannel(shiftCtrl)
-print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
-print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))
-
+# print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
+# print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))
 # view = TestView()
 
 # delegate = modelEditDelegate()
 
-# testWindow = MainWindow(view, shiftChannel, delegate)
-# testWindow.show()
+Window = MainWindow(shiftChannel)
+Window.show()
 
-# sys.exit(app.exec_())
+sys.exit(app.exec_())
