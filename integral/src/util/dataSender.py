@@ -3,6 +3,7 @@ import datetime
 from enum import Enum, auto
 import locale
 import logging
+import math
 import os
 
 import pandas as pd
@@ -27,9 +28,14 @@ class DataSender(Members):
     def __init__(self):
         super().__init__()
 
-    def toDateHeader(self) -> list[str]:
+    def toHeader_fullspan(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
         return [datetime.datetime.strftime(datetime.date(*yyyymmddww[:3]), '%Y-%m-%d') for yyyymmddww in self.day_previous_next]
+
+    def toHeader_nowMonth(self) -> list[str]:
+        locale.setlocale(locale.LC_TIME, 'ja_JP')
+        return [datetime.datetime.strftime(datetime.date(*yyyymmddww[:3]), '%Y-%m-%d') for yyyymmddww in self.now_month]
+        
 
     def getDf4Shimizu(self):
 
@@ -48,15 +54,19 @@ class DataSender(Members):
     """
 
     def getYakinForm(self) -> pd.DataFrame:
-        yakinUnion = {'4', '5', '6', '0', '1', '2', '3', '30'}
-        yakinTemp = {day: {job: uid} for uid, person in self.members.items()
-                     for day, job in person.jobPerDay.items() if job in yakinUnion}
+        # df.at[strday, int(job)] is not None
+        # math.isnan(df.at[strday, int(job)])
+        df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
+        for person in self.members.values():
+            for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
+                if job  in ["4", "5", "6", "0", "1", "2", "3"]:
+                    if type(df.at[strday, int(job)]) is str and job == "3":
+                        df.at[strday, -3] = person.name
+                    else:
+                        df.at[strday, int(job)] = person.name
 
-        df = pd.DataFrame(yakinTemp)
-        df.where(pd.notnull(df), None, inplace=True)#whereじゃなくreplaceでうまくいくかも
-        df.sort_index(axis=1, inplace=True)
-        logging.debug(df.T)
-        return df.T
+        return df
+
 
     # 本田さん向け
     @ConvertTable.id2Name
@@ -73,7 +83,7 @@ class DataSender(Members):
             *無いときはNone
 
         """
-        df = pd.DataFrame(None, columns=self.toDateHeader(), index=self.members.keys())
+        df = pd.DataFrame(None, columns=self.toHeader_fullspan(), index=self.members.keys())
         if dataName == DataName.kinmu:
             
             #3月は空，4月～5月1日まで
@@ -98,7 +108,7 @@ class DataSender(Members):
 
         elif dataName == DataName.request:
             
-            df = pd.DataFrame(None, columns=self.toDateHeader(), index=self.members.keys())
+            df = pd.DataFrame(None, columns=self.toHeader_fullspan(), index=self.members.keys())
             for uid, person in self.members.items():
                 for day, job in person.requestPerDay.items():
                     strday :str = datetime.datetime.strftime(datetime.date(*day[:3]), '%Y-%m-%d')
@@ -135,7 +145,7 @@ class DataSender(Members):
     def getJapanHolidayDF(self):
         holidayHandler = JapanHoliday()
         holiday = []
-        for day in self.toDateHeader():
+        for day in self.toHeader_fullspan():
             if holidayHandler.is_holiday(day):
                 holiday.append(day)
         return holiday

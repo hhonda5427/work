@@ -17,7 +17,6 @@ shiftChannel = ShiftChannel(shiftCtrl)
 # view = TestView()
 
 # delegate = modelEditDelegate()
-
 Window = MainWindow(shiftChannel)
 Window.show()
 

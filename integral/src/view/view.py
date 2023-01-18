@@ -432,7 +432,7 @@ class ShiftModel(TableModel):
         return False    
 
     def updateDF(self, newDF):
-        self.kinmuDF = newDF
+        self._data = newDF
 
     # previous, request, shift に応じた文字カラーを設定
     def setTextColors(self):

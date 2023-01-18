@@ -4,12 +4,19 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import *
 from pprint import pprint
 
+# from integral.src.util.shiftController import ShiftChannel
+
 
 
 class Model(QtCore.QAbstractTableModel):
-    def __init__(self, dataframe: pd.DataFrame):
+    changeTrigger = QtCore.pyqtSignal(QtCore.QModelIndex, str, str)
+
+
+    def __init__(self, shiftChannel):
         super(Model, self).__init__()
-        self._dataframe = dataframe
+        self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
+        self.changeTrigger.connect(shiftChannel.updateMember)
+
 
     def index(self, row, column, parent= QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -42,17 +49,21 @@ class Model(QtCore.QAbstractTableModel):
 
     def setData(self, index, value, role= QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
+            self.changeTrigger.emit(index, value, self.__class__.__name__)
             self._dataframe.iat[index.row(), index.column()] = value
             return True
         return False   
 
+    def updateDF(self, newDF):
+        self._dataframe = newDF
+
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
-    def __init__(self, data, parent=None):
+    def __init__(self, shiftChannel, parent=None):
         super(nightshiftDialog, self).__init__(parent)
 
-        self._data = data
-        self.model = Model(self._data.DFyakinhyou)
+        self._data = shiftChannel
+        self.model = Model(self._data)
 
         self.initui()
         
@@ -349,13 +360,13 @@ class CandidateWidget(QtWidgets.QWidget):
 
 
 
-def main():
-    app = QtWidgets.QApplication(sys.argv)
+# def main():
+#     app = QtWidgets.QApplication(sys.argv)
 
 
-    window = nightshiftDialog(data)
-    window.show()
-    app.exec()
+#     window = nightshiftDialog()
+#     window.show()
+#     app.exec()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

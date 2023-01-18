@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
         self.shiftModel = view.ShiftModel(self.kinmu, shiftChannel)
         self.countModel = view.CountModel(data.counttable)
         
+
         self.memberElemObserver = MemberElemObserver(
             self.shiftModel, Model4Yakin(shiftCtrlChannel=shiftChannel))
 
@@ -40,11 +41,12 @@ class MainWindow(QMainWindow):
 
         self.shiftView = view.ShiftTableWidget(self.shiftModel, self.rowHeaderModel, self.columnHeaderModel, self.countModel)
         # self.shiftView.setWindowTitle(shiftChannel.shiftCtrl.date + '勤務表作成中')
-        
+        self.yakinView = yakinview.nightshiftDialog(shiftChannel)
         self.initUI()
 
         self.show()
         self.shiftView.show()
+        self.yakinView.show()
 
 
     def initUI(self):
