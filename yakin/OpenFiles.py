@@ -72,7 +72,7 @@ def shift():
     #シフト
     # input_data = open("C:/Users/pelu0/Desktop/20221220/sample1/shift.dat", 'r')
     input_data = open(r'C:\Users\honda\radschedule\data\shift.dat', 'r')
-    dfshift = pd.read_csv(r'C:\Users\honda\radschedule\data\shift.dat', header=)
+    # dfshift = pd.read_csv(r'C:\Users\honda\radschedule\data\shift.dat', header=)
     b = []
     # 一行ずつ読み込んでは表示する
     for rows in input_data:
