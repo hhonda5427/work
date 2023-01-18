@@ -8,7 +8,7 @@ from database.model4Kinmu import Model4Kinmu
 from database.model4Yakin import Model4Yakin
 from Event.memberSubject import memberUpdateGenerator
 from util.dataSender import DataSender, DataName
-from . import view
+from . import view, yakinview
 from util.shiftController import ShiftChannel
 from datamodel import *
 
@@ -18,9 +18,7 @@ class MainWindow(QMainWindow):
         data = DataModel()
         
         self.kinmu = shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
-        previous = shiftChannel.shiftCtrl.getKinmuForm(DataName.previous)
-        request = shiftChannel.shiftCtrl.getKinmuForm(DataName.request)
-        print(self.kinmu)
+
         self.rowHeaderModel = view.RowHeaderModel(data.staffinfo, shiftChannel)
         self.columnHeaderModel = view.ColumnHeaderModel(data.header, data.closed)
         self.shiftModel = view.ShiftModel(self.kinmu, shiftChannel)
