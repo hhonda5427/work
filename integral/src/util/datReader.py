@@ -9,7 +9,7 @@ from database.member import *
 from decorator.convertTable import ConvertTable
 from decorator.validate import *
 
-logging.basicConfig(filename='PyQtPractice\log\data.log', level=logging.DEBUG)
+# logging.basicConfig(filename='PyQtPractice\log\data.log', level=logging.DEBUG)
 
 # .datファイルを元に職員情報をもったオブジェクトを生成する
 

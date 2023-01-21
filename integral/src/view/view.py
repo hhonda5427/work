@@ -1,7 +1,7 @@
 import pandas as pd
 
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant, pyqtSignal
-from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem
+from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent
 from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemView, 
                             QGridLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
                             QStyledItemDelegate)
@@ -45,7 +45,7 @@ class ShiftTableWidget(QWidget):
         self.columnHeaderModel = columnHeaderModel
         self.shiftModel = shiftModel
         self.countModel = countModel
-
+    
         self.columnHeaderView = BaseView()
         self.columnHeaderView.setModel(self.columnHeaderModel)
         self.columnHeaderView.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
@@ -78,9 +78,9 @@ class ShiftTableWidget(QWidget):
         self.countView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.countView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
 
-        self.nameView = BaseView()
-        self.nameView.setModel(self.setHeaderName())
-        self.nameView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # self.nameView = BaseView()
+        # self.nameView.setModel(self.setHeaderName())
+        # self.nameView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.setColumnWidth()
         self.setRowHeight()
@@ -91,7 +91,7 @@ class ShiftTableWidget(QWidget):
         layout.setVerticalSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addWidget(self.nameView, 0, 0)
+        # layout.addWidget(self.nameView, 0, 0)
         layout.addWidget(self.columnHeaderView, 0, 1)
         layout.addWidget(self.rowHeaderView, 1, 0)
         layout.addWidget(self.scrollView, 1, 1)
@@ -105,13 +105,13 @@ class ShiftTableWidget(QWidget):
         self.setContentsMargins(5, 0, 0, 0)
         self.setMinimumSize(1000, 400)
 
-    def setHeaderName(self):
-        name = pd.DataFrame(data=[['', '', '', '休日'],
-                                  ['', '', '', ''],
-                                  ['UID', 'ID', '氏名', '所属']])
-        nameHeader = TableModel(name)
+    # def setHeaderName(self):
+    #     name = pd.DataFrame(data=[['', '', '', '休日'],
+    #                               ['', '', '', ''],
+    #                               ['UID', 'ID', '氏名', '所属']])
+    #     nameHeader = TableModel(name)
         
-        return nameHeader
+    #     return nameHeader
 
     def setColumnWidth(self):
         staffwidth = [30, 80, 100, 30]
@@ -122,7 +122,7 @@ class ShiftTableWidget(QWidget):
             self.scrollView.setColumnWidth(col, COLUMNWIDTH)
             if col < self.rowHeaderModel.columnCount():
                 self.rowHeaderView.setColumnWidth(col, staffwidth[col])
-                self.nameView.setColumnWidth(col, staffwidth[col])
+                # self.nameView.setColumnWidth(col, staffwidth[col])
             if col < self.countModel.columnCount():
                 self.countView.setColumnWidth(col, COLUMNWIDTH)
 
@@ -135,7 +135,7 @@ class ShiftTableWidget(QWidget):
             self.scrollView.setRowHeight(row, ROWHEIGHT)
             if row < self.columnHeaderModel.rowCount():
                 self.columnHeaderView.setRowHeight(row, ROWHEIGHT)
-                self.nameView.setRowHeight(row, ROWHEIGHT)
+                # self.nameView.setRowHeight(row, ROWHEIGHT)
 
 
     
@@ -145,12 +145,12 @@ class ShiftTableWidget(QWidget):
         for row in range(self.columnHeaderModel.rowCount()):
             h += self.columnHeaderView.rowHeight(row)
         self.columnHeaderView.setFixedHeight(h)
-        self.nameView.setFixedHeight(h)
+        # self.nameView.setFixedHeight(h)
 
         for col in range(self.rowHeaderModel.columnCount()):
             w += self.rowHeaderView.columnWidth(col)
         self.rowHeaderView.setFixedWidth(w)
-        self.nameView.setFixedWidth(w)
+        # self.nameView.setFixedWidth(w)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -160,6 +160,10 @@ class ShiftTableWidget(QWidget):
         maxval = self.shiftView.verticalScrollBar().maximum()
         self.scrollView.verticalScrollBar().setMaximum(maxval)
         
+    def showEvent(self, a0:QShowEvent) -> None:
+        super().showEvent(a0)
+        
+
 
     def SyncHorizontalScrollBar(self, value):
         
@@ -224,10 +228,10 @@ class BaseView(QTableView):
         self.setSelectionMode(QAbstractItemView.NoSelection)
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data, parent=None, *args):
+    def __init__(self, parent=None, *args):
         super().__init__()
 
-        self._data = data
+        self._data = None
 
     def index(self, row, column, parent=QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -273,8 +277,8 @@ class TableModel(QAbstractTableModel):
         return False    
 
 class RowHeaderModel(TableModel):
-    def __init__(self, data, shiftChannel:ShiftChannel, parent=None, *args):
-        super().__init__(self, data, parent, *args)
+    def __init__(self, shiftChannel:ShiftChannel, parent=None, *args):
+        super().__init__(self, parent, *args)
         self._data = shiftChannel.shiftCtrl.getStaffInfo()
         self._font = [False for i in range(len(self._data))]
         self._color = [QColor('#00000000') for i in range(len(self._data))]
@@ -323,12 +327,12 @@ class RowHeaderModel(TableModel):
 
 
 class ColumnHeaderModel(TableModel):
-    def __init__(self, data, closed, parent=None, *args):
-        super().__init__(self, data, parent, *args)
-        self._data = data
-        self._closed = closed
-        self.columnslist = data.columns.values
-        self._font = [False for i in range(len(data.columns))]
+    def __init__(self, shiftChannel:ShiftChannel, parent=None, *args):
+        super().__init__(self, parent, *args)
+        self._data = shiftChannel.shiftCtrl.getCalendarDF()
+        self._closed = shiftChannel.shiftCtrl.getJapanHolidayDF()
+        self.columnslist = self._data.columns.values
+        self._font = [False for i in range(len(self._data.columns))]
 
     def data(self, index: QModelIndex, role=Qt.ItemDataRole):
         if not index.isValid():
@@ -367,13 +371,10 @@ class ShiftModel(TableModel):
 
     changeTrigger = pyqtSignal(QModelIndex, str, str)
 
-    # def __init__(self, data, shiftCtrlChannel: ShiftChannel, previous, request, parent=None, *args):
-    def __init__(self, data, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
-        super().__init__(self, data, parent, *args)
+    def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
+        super().__init__(self, parent, *args)
         self._data = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
-        # self._previous = previous
         self._previous = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.previous)
-        # self._request = request
         self._request = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.request)
         self.rowHeader = self._data.index.values #shiftのindexの値を配列にする
         
@@ -512,6 +513,9 @@ class ShiftDelegate(QStyledItemDelegate):
             model.setData(index, value, Qt.EditRole)
 
 class CountModel(TableModel):
-    def __init__(self, data, parent=None, *args):
-        super().__init__(data, parent, *args)
-        self._data = data    
+    def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):
+        super().__init__(self, parent, *args)
+        uidIndex = shiftCtrlChannel.shiftCtrl.getStaffInfo().index.values.tolist()
+        df = pd.DataFrame(index = uidIndex, columns= ['dayoff', 'consective'])
+        df.fillna(0, inplace=True)
+        self._data = df
