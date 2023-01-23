@@ -14,10 +14,10 @@ class ShiftChannel(memberUpdateGenerator):
     """
     memberクラスの変化報告、model変化の受付
     """
-
+    shiftCtrl:ShiftController
     def __init__(self, shiftCtrl: ShiftController) -> None:
         super().__init__()
-        self.shiftCtrl = shiftCtrl
+        ShiftChannel.shiftCtrl = shiftCtrl
 
     def updateMember(self, index: QModelIndex, value, fromClass):
         print(
@@ -29,16 +29,19 @@ class ShiftChannel(memberUpdateGenerator):
         value -> job
         """
         if fromClass == "ShiftModel":
-            print(f'呼び出されました:{self.updateMember.__name__}')
-            uidList = list(self.shiftCtrl.members.keys())
-            self.shiftCtrl.members[uidList[index.row(
-            )]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = value
+
+            uidList = list(ShiftChannel.shiftCtrl.members.keys())
+            print(f'書き換え前:{ShiftChannel.shiftCtrl.members[uidList[index.row()]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]]}')
+            ShiftChannel.shiftCtrl.members[uidList[index.row(
+            )]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]] = value
+
+            print(f'書き換え後:{ShiftChannel.shiftCtrl.members[uidList[index.row()]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]]}')
             self.notifyObseber()
 
     def getKinmuDF(self):
         print(f'呼び出されました:{self.getKinmuDF.__name__}')
-        return self.shiftCtrl.getKinmuForm(DataName.kinmu)
+        return ShiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
 
     def getYakinDF(self):
         print(f'呼び出されました:{self.getYakinDF.__name__}')
-        return self.shiftCtrl.getYakinForm()
+        return ShiftChannel.shiftCtrl.getYakinForm()

@@ -21,8 +21,7 @@ class MainWindow(QMainWindow):
         self.shiftModel = view.ShiftModel(shiftChannel)
         self.countModel = view.CountModel(shiftChannel)
         
-        self.memberElemObserver = MemberElemObserver(
-            self.shiftModel, Model4Yakin(shiftCtrlChannel=shiftChannel))
+        self.memberElemObserver = MemberElemObserver(self)
 
         shiftChannel.addObserber(self.memberElemObserver)
 
@@ -95,12 +94,14 @@ class MainWindow(QMainWindow):
 
 
 class MemberElemObserver(Observer):
-    def __init__(self, kinmuModel: Model4Kinmu, yakinModel: Model4Yakin) -> None:
+    mainWindowObj:MainWindow
+    
+    def __init__(self, mainWindowObj: MainWindow) -> None:
         super().__init__()
-        self.kinmuModel = kinmuModel
-        self.yakinModel = yakinModel
+        MemberElemObserver.mainWindowObj = mainWindowObj
 
     def update(self, generator: memberUpdateGenerator):
-        self.kinmuModel.updateDF(generator.getKinmuDF())
-        self.yakinModel.updateDF(generator.getYakinDF())
+        print(generator.getYakinDF())
+        MemberElemObserver.mainWindowObj.shiftView.shiftModel.updateDF(generator.getKinmuDF())
+        MemberElemObserver.mainWindowObj.yakinView.model.updateDF(generator.getYakinDF())
         print('modelがアップデートされました')
