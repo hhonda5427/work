@@ -13,7 +13,6 @@ app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
-# print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))
 
 # delegate = modelEditDelegate()
 Window = MainWindow(shiftChannel)
