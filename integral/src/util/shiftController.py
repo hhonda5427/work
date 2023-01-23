@@ -28,7 +28,7 @@ class ShiftChannel(memberUpdateGenerator):
         index.column() -> day
         value -> job
         """
-        if fromClass == "Model4Kinmu":
+        if fromClass == "ShiftModel":
             print(f'呼び出されました:{self.updateMember.__name__}')
             uidList = list(self.shiftCtrl.members.keys())
             self.shiftCtrl.members[uidList[index.row(

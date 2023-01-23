@@ -1,1 +1,1 @@
-ROOT_PATH = "work/integral/data"
+ROOT_PATH = "integral/data"

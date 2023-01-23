@@ -50,12 +50,13 @@ class Model(QtCore.QAbstractTableModel):
     def setData(self, index, value, role= QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             self.changeTrigger.emit(index, value, self.__class__.__name__)
-            self._dataframe.iat[index.row(), index.column()] = value
+            # self._dataframe.iat[index.row(), index.column()] = value
             return True
         return False   
 
     def updateDF(self, newDF):
         self._dataframe = newDF
+        print('modelのデータが書き換えられました')
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
