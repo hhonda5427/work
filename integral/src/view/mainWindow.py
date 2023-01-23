@@ -15,32 +15,25 @@ from datamodel import *
 class MainWindow(QMainWindow):
     def __init__(self, shiftChannel: ShiftChannel):
         super().__init__()
-        data = DataModel()
-        
-        self.kinmu = shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
 
-        self.rowHeaderModel = view.RowHeaderModel(data.staffinfo, shiftChannel)
-        self.columnHeaderModel = view.ColumnHeaderModel(data.header, data.closed)
-        self.shiftModel = view.ShiftModel(self.kinmu, shiftChannel)
-        self.countModel = view.CountModel(data.counttable)
+        self.rowHeaderModel = view.RowHeaderModel(shiftChannel)
+        self.columnHeaderModel = view.ColumnHeaderModel(shiftChannel)
+        self.shiftModel = view.ShiftModel(shiftChannel)
+        self.countModel = view.CountModel(shiftChannel)
         
-
         self.memberElemObserver = MemberElemObserver(
             self.shiftModel, Model4Yakin(shiftCtrlChannel=shiftChannel))
 
         shiftChannel.addObserber(self.memberElemObserver)
 
-        # self.view = view
-        # self.delegate = delegate
-
-        # self.view.setModel(self.memberElemObserver.kinmuModel)  # とりあえず
-        # self.view.setItemDelegate(self.delegate)
-        # self.setCentralWidget(self.view)
 
         self.resize(1500, 800)
 
-        self.shiftView = view.ShiftTableWidget(self.shiftModel, self.rowHeaderModel, self.columnHeaderModel, self.countModel)
-        # self.shiftView.setWindowTitle(shiftChannel.shiftCtrl.date + '勤務表作成中')
+        self.shiftView = view.ShiftTableWidget( self.shiftModel,
+                                                self.rowHeaderModel,
+                                                self.columnHeaderModel,
+                                                self.countModel   
+                                                )
         self.yakinView = yakinview.nightshiftDialog(shiftChannel)
         self.initUI()
 
@@ -67,7 +60,8 @@ class MainWindow(QMainWindow):
         btn1 = QPushButton('夜勤表', self)   
         btn2 = QPushButton('勤務表',self)
         
-        btn1.clicked.connect(lambda:self.showTable(self.shiftView))
+        btn1.clicked.connect(lambda:self.showTable(self.yakinView))
+        btn2.clicked.connect(lambda:self.showTable(self.shiftView))
 
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(btn1)
@@ -83,11 +77,12 @@ class MainWindow(QMainWindow):
             view.hide()
         else:
             view.show()
+      
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         
         self.shiftView.close()
-        
+        self.yakinView.close()
         return super().closeEvent(a0)
 
 

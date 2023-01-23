@@ -142,6 +142,7 @@ class DataSender(Members):
         df = df.sort_values(by=['モダリティ', 'uid'], ascending=[True, True])
         return df
 
+    # 日付の配列の中で休みを返す
     def getJapanHolidayDF(self):
         holidayHandler = JapanHoliday()
         holiday = []
@@ -149,6 +150,21 @@ class DataSender(Members):
             if holidayHandler.is_holiday(day):
                 holiday.append(day)
         return holiday
+
+    def getCalendarDF(self):
+
+        WEEKDAY = ['月','火','水','木','金','土','日']
+        df = pd.DataFrame.from_dict(
+            {
+            'holiday':[0 for i in range(len(self.toHeader_fullspan()))],
+            'date': [yyyymmddww[2] for yyyymmddww in self.day_previous_next],
+            'weekday':[WEEKDAY[(yyyymmddww[3])] for yyyymmddww in self.day_previous_next],
+            },
+            orient = 'index',
+            columns = self.toHeader_fullspan(),
+        )
+
+        return df
 
     def getDf4Iwasaki(self):
         pass
@@ -163,7 +179,7 @@ class JapanHoliday:
     """
     
     def __init__(self, encoding='cp932'):
-        _path = os.path.join("integral\data\syukujitsu.csv",'syukujitsu.csv')
+        _path = os.path.join("integral\data",'syukujitsu.csv')
         self._holidays = self._read_holiday(_path, encoding)
  
     def _read_holiday(self, path, encoding):
