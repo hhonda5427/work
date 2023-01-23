@@ -10,7 +10,7 @@ from view.view import *
 from controller.delegate import modelEditDelegate
 
 app = QApplication(sys.argv)
-shiftCtrl = ShiftController('integral\data')
+shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))

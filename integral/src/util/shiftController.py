@@ -1,13 +1,13 @@
 from PyQt5.QtCore import QModelIndex
 
 from Event.memberSubject import memberUpdateGenerator
-from util.datReader import DatReader
+from util.dataReader import DataReader
 from util.dataSender import DataSender, DataName
 
 
-class ShiftController(DatReader, DataSender):
-    def __init__(self, rootPath):
-        super().__init__(rootPath)
+class ShiftController(DataReader, DataSender):
+    def __init__(self):
+        super().__init__()
 
 
 class ShiftChannel(memberUpdateGenerator):
@@ -34,15 +34,6 @@ class ShiftChannel(memberUpdateGenerator):
             self.shiftCtrl.members[uidList[index.row(
             )]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = value
             self.notifyObseber()
-        # できてるっぽいけど、indexがずれる ↑に4つあがったところに入力される
-        # => 修正済み。
-        # なおった
-        # 　なおった
-        # `_＿＿  ♪　∧ ∧ ∩
-        # /∥￣∥　r(^ ω ^)ノ
-        # L∥＿∥  └┐　   レ―､
-        # |￣＼三 /￣/　＿ノ⌒
-        # |　 ｜/　/(_(　　♪
 
     def getKinmuDF(self):
         print(f'呼び出されました:{self.getKinmuDF.__name__}')
