@@ -14,7 +14,6 @@ shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.previous))
-# view = TestView()
 
 # delegate = modelEditDelegate()
 Window = MainWindow(shiftChannel)
