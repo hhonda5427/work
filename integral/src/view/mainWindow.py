@@ -9,11 +9,11 @@ from database.model4Yakin import Model4Yakin
 from Event.memberSubject import memberUpdateGenerator
 from util.dataSender import DataSender, DataName
 from . import view, yakinview
-from util.shiftController import self
+from util.shiftController import ShiftChannel
 from datamodel import *
 
 class MainWindow(QMainWindow):
-    def __init__(self, shiftChannel: self):
+    def __init__(self, shiftChannel: ShiftChannel):
         super().__init__()
 
         self.rowHeaderModel = view.RowHeaderModel(shiftChannel)

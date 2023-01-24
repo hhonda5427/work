@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemVie
                             QStyledItemDelegate)
 
 from util.dataSender import DataName
-from util.shiftController import self
+from util.shiftController import ShiftChannel
 
 # class TestView(QtWidgets.QTableView):
 #     def __init__(self, parent=None) -> None:
@@ -277,7 +277,7 @@ class TableModel(QAbstractTableModel):
         return False    
 
 class RowHeaderModel(TableModel):
-    def __init__(self, shiftChannel:self, parent=None, *args):
+    def __init__(self, shiftChannel:ShiftChannel, parent=None, *args):
         super().__init__(self, parent, *args)
         self._data = shiftChannel.shiftCtrl.getStaffInfo()
         self._font = [False for i in range(len(self._data))]
@@ -327,7 +327,7 @@ class RowHeaderModel(TableModel):
 
 
 class ColumnHeaderModel(TableModel):
-    def __init__(self, shiftChannel:self, parent=None, *args):
+    def __init__(self, shiftChannel:ShiftChannel, parent=None, *args):
         super().__init__(self, parent, *args)
         self._data = shiftChannel.shiftCtrl.getCalendarDF()
         self._closed = shiftChannel.shiftCtrl.getJapanHolidayDF()
@@ -371,7 +371,7 @@ class ShiftModel(TableModel):
 
     changeTrigger = pyqtSignal(QModelIndex, str, str)
 
-    def __init__(self, shiftCtrlChannel: self, parent=None, *args):    
+    def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
         super().__init__(self, parent, *args)
         self._data = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         self._previous = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.previous)
@@ -513,7 +513,7 @@ class ShiftDelegate(QStyledItemDelegate):
             model.setData(index, value, Qt.EditRole)
 
 class CountModel(TableModel):
-    def __init__(self, shiftCtrlChannel: self, parent=None, *args):
+    def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):
         super().__init__(self, parent, *args)
         uidIndex = shiftCtrlChannel.shiftCtrl.getStaffInfo().index.values.tolist()
         df = pd.DataFrame(index = uidIndex, columns= ['dayoff', 'consective'])

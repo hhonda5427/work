@@ -3,14 +3,14 @@ from PyQt5.QtCore import *
 from pandas import DataFrame
 from util.dataSender import DataName
 
-from util.shiftController import self
+from util.shiftController import ShiftChannel
 
 
 class Model4Kinmu(QAbstractTableModel):
 
     changeTrigger = pyqtSignal(QModelIndex, str, str)
 
-    def __init__(self, parent=None, shiftCtrlChannel: self = None):
+    def __init__(self, parent=None, shiftCtrlChannel: ShiftChannel = None):
         super().__init__(parent)
         self.kinmuDF = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         self.changeTrigger.connect(shiftCtrlChannel.updateMember)

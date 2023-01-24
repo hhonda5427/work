@@ -3,14 +3,14 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from database.model4Kinmu import Model4Kinmu 
 
-from util.shiftController import self, ShiftController
+from util.shiftController import ShiftChannel, ShiftController
 from view.mainWindow import MainWindow
 from view.view import *
 from controller.delegate import modelEditDelegate
 
 app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
-shiftChannel = self(shiftCtrl)
+shiftChannel = ShiftChannel(shiftCtrl)
 # print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
 
 # delegate = modelEditDelegate()
