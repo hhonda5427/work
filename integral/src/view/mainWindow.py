@@ -9,11 +9,11 @@ from database.model4Yakin import Model4Yakin
 from Event.memberSubject import memberUpdateGenerator
 from util.dataSender import DataSender, DataName
 from . import view, yakinview
-from util.shiftController import ShiftChannel
+from util.shiftController import self
 from datamodel import *
 
 class MainWindow(QMainWindow):
-    def __init__(self, shiftChannel: ShiftChannel):
+    def __init__(self, shiftChannel: self):
         super().__init__()
 
         self.rowHeaderModel = view.RowHeaderModel(shiftChannel)
@@ -101,7 +101,7 @@ class MemberElemObserver(Observer):
         MemberElemObserver.mainWindowObj = mainWindowObj
 
     def update(self, generator: memberUpdateGenerator):
-        print(generator.getYakinDF())
+        print(generator.getKinmuDF().loc[:60, ["2023-04-01","2023-04-02","2023-04-03"]])
         MemberElemObserver.mainWindowObj.shiftView.shiftModel.updateDF(generator.getKinmuDF())
         MemberElemObserver.mainWindowObj.yakinView.model.updateDF(generator.getYakinDF())
         print('modelがアップデートされました')

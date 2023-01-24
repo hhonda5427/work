@@ -2,12 +2,12 @@
 from PyQt5.QtCore import *
 from pandas import DataFrame
 
-from util.shiftController import ShiftChannel
+from util.shiftController import self
 
 
 class Model4Yakin(QAbstractTableModel):
 
-    def __init__(self, parent=None, shiftCtrlChannel: ShiftChannel = None):
+    def __init__(self, parent=None, shiftCtrlChannel: self = None):
         super().__init__(parent)
         self.yakinDF = shiftCtrlChannel.shiftCtrl.getYakinForm()
 

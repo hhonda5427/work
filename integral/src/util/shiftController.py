@@ -5,7 +5,14 @@ from util.dataReader import DataReader
 from util.dataSender import DataSender, DataName
 
 
-class ShiftController(DataReader, DataSender):
+class Singleton():
+     def __new__(cls, *arg, **kargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(Singleton, cls).__new__(cls)
+        return cls._instance
+
+
+class ShiftController(DataReader, DataSender, Singleton):
     def __init__(self):
         super().__init__()
 
@@ -14,10 +21,9 @@ class ShiftChannel(memberUpdateGenerator):
     """
     memberクラスの変化報告、model変化の受付
     """
-    shiftCtrl:ShiftController
     def __init__(self, shiftCtrl: ShiftController) -> None:
         super().__init__()
-        ShiftChannel.shiftCtrl = shiftCtrl
+        self.shiftCtrl = shiftCtrl
 
     def updateMember(self, index: QModelIndex, value, fromClass):
         print(
@@ -30,18 +36,18 @@ class ShiftChannel(memberUpdateGenerator):
         """
         if fromClass == "ShiftModel":
 
-            uidList = list(ShiftChannel.shiftCtrl.members.keys())
-            print(f'書き換え前:{ShiftChannel.shiftCtrl.members[uidList[index.row()]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]]}')
-            ShiftChannel.shiftCtrl.members[uidList[index.row(
-            )]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]] = value
+            uidList = list(self.shiftCtrl.members.keys())
+            print(f'書き換え前:{self.shiftCtrl.members[uidList[index.row()]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]]}')
+            self.shiftCtrl.members[uidList[index.row(
+            )]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = value
 
-            print(f'書き換え後:{ShiftChannel.shiftCtrl.members[uidList[index.row()]].jobPerDay[ShiftChannel.shiftCtrl.day_previous_next[index.column()]]}')
+            print(f'書き換え後:{self.shiftCtrl.members[uidList[index.row()]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]]}')
             self.notifyObseber()
 
     def getKinmuDF(self):
         print(f'呼び出されました:{self.getKinmuDF.__name__}')
-        return ShiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
+        return self.shiftCtrl.getKinmuForm(DataName.kinmu)
 
     def getYakinDF(self):
         print(f'呼び出されました:{self.getYakinDF.__name__}')
-        return ShiftChannel.shiftCtrl.getYakinForm()
+        return self.shiftCtrl.getYakinForm()
