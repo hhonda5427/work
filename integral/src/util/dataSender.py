@@ -88,7 +88,6 @@ class DataSender(Members):
         if dataName == DataName.kinmu:
             
             #3月は空，4月～5月1日まで
-
             for uid, person in self.members.items():
                 for day, job in person.jobPerDay.items():
                     strday :str = datetime.datetime.strftime(datetime.date(*day[:3]), '%Y-%m-%d')

@@ -10,7 +10,7 @@ from Event.memberSubject import memberUpdateGenerator
 from util.dataSender import DataSender, DataName
 from . import view, yakinview
 from util.shiftController import ShiftChannel
-from datamodel import *
+from view.datamodel import *
 
 class MainWindow(QMainWindow):
     def __init__(self, shiftChannel: ShiftChannel):

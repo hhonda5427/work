@@ -18,3 +18,7 @@ class ConvertTable:
 
             return dataFrame
         return wrapper
+
+    # @staticmethod
+    # def name2Id(name:str):
+        
