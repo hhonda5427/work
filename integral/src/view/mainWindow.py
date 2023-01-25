@@ -102,4 +102,5 @@ class MemberElemObserver(Observer):
 
     def update(self, generator: memberUpdateGenerator):
         self.kinmuModel.updateDF(generator.getKinmuDF())
+        print(generator.getKinmuDF())
         self.yakinModel.updateDF(generator.getYakinDF())
