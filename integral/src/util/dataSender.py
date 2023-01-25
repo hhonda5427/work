@@ -31,11 +31,11 @@ class DataSender(Members):
 
     def toHeader_fullspan(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
-        return [datetime.datetime.strftime(datetime.date(*yyyymmddww[:3]), '%Y-%m-%d') for yyyymmddww in self.day_previous_next]
+        return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.day_previous_next]
 
     def toHeader_nowMonth(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
-        return [datetime.datetime.strftime(datetime.date(*yyyymmddww[:3]), '%Y-%m-%d') for yyyymmddww in self.now_month]
+        return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.now_month]
         
 
     def getDf4Shimizu(self):
@@ -66,6 +66,7 @@ class DataSender(Members):
                     else:
                         df.at[strday, int(job)] = person.name
 
+        print(df.loc[:"2023-04-05", [1, 2]])
         return df
 
 
@@ -157,8 +158,8 @@ class DataSender(Members):
         df = pd.DataFrame.from_dict(
             {
             'holiday':[0 for i in range(len(self.toHeader_fullspan()))],
-            'date': [yyyymmddww[2] for yyyymmddww in self.day_previous_next],
-            'weekday':[WEEKDAY[(yyyymmddww[3])] for yyyymmddww in self.day_previous_next],
+            'date': [yyyymmdd[2] for yyyymmdd in self.day_previous_next],
+            'weekday':[WEEKDAY[calendar.weekday(*yyyymmdd)] for yyyymmdd in self.day_previous_next],
             },
             orient = 'index',
             columns = self.toHeader_fullspan(),

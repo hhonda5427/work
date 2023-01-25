@@ -3,6 +3,7 @@ from PyQt5.QtCore import QModelIndex
 from Event.memberSubject import memberUpdateGenerator
 from util.dataReader import DataReader
 from util.dataSender import DataSender, DataName
+from decorator.convertTable import ConvertTable
 
 class Singleton():
      def __new__(cls, *arg, **kargs):
@@ -24,31 +25,24 @@ class ShiftChannel(memberUpdateGenerator):
         super().__init__()
         self.shiftCtrl = shiftCtrl
 
-    def updateMember(self, index: QModelIndex, value, fromClass):
+    def updateMember(self, uid:int, day:str, job:str):
         print(
-            f'変更申請: row:{index.row()}, column:{index.column()}, value:{value}, from:{fromClass}')
+            f'変更申請: uid: {uid}, day: {day}, job: {job}')
         """
         <<fromClass: Model4Kinmu>>
         index.row() -> uid
         index.column() -> day
         value -> job
         """
-        if fromClass == "ShiftModel":
-            print(f'呼び出されました:{self.updateMember.__name__}')
-            uidList = list(self.shiftCtrl.members.keys())
-            print(uidList)
-            self.shiftCtrl.members[uidList[index.row(
-            )]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = 3
-            print(f'uidList[index.row()]: {uidList[index.row()]}, self.shiftCtrl.day_previous_next[index.column()]:{self.shiftCtrl.day_previous_next[index.column()]}')
-            print(self.shiftCtrl.members[uidList[index.row()]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] == self.shiftCtrl.members[4].jobPerDay[(2023, 4, 2, 6)])
-            print(f'大元のmember: {self.shiftCtrl.members[2].jobPerDay[(2023, 4, 2, 6)]}')
-            self.notifyObseber()
+
+        day = tuple([int(daystr) for daystr in day.split('-')])
+
+        print(f'呼び出されました:{self.updateMember.__name__}')
+        self.shiftCtrl.members[uid].jobPerDay[day] = ConvertTable.name2Id(job)
+        self.notifyObseber()
 
     def getKinmuDF(self):
         print(f'呼び出されました:{self.getKinmuDF.__name__}')
-        tmp = self.shiftCtrl.getKinmuForm(DataName.kinmu)
-        print(f'変更されているであろうDF:{tmp.loc[:60,["2023-04-02", "2023-04-03"]]}')
-        print(f'大元のmember: {self.shiftCtrl.members[4].jobPerDay[(2023, 4, 2, 6)]}')
         return self.shiftCtrl.getKinmuForm(DataName.kinmu)
 
     def getYakinDF(self):

@@ -67,11 +67,11 @@ class DataReader(Members):
             *data['date'], '%Y/%m/%d')
         
         cal = calendar.Calendar()
-        self.previous_month = [datetuple for datetuple in cal.itermonthdays4(
+        self.previous_month = [datetuple for datetuple in cal.itermonthdays3(
             self.date.year, self.date.month-1) if datetuple[1] == self.date.month - 1][-int(data['iota'][0]):]
-        self.now_month = [datetuple for datetuple in cal.itermonthdays4(
+        self.now_month = [datetuple for datetuple in cal.itermonthdays3(
             self.date.year, self.date.month) if datetuple[1] == self.date.month]
-        self.next_month = [datetuple for datetuple in cal.itermonthdays4(
+        self.next_month = [datetuple for datetuple in cal.itermonthdays3(
             self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
         self.now_next_month = self.now_month + [self.next_month[0]]

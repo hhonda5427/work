@@ -16,7 +16,7 @@ class Model(QtCore.QAbstractTableModel):
         super(Model, self).__init__()
         self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
         self.changeTrigger.connect(shiftChannel.updateMember)
-
+        print(self._dataframe.loc[:"2023-04-05", [1, 2]])
 
     def index(self, row, column, parent= QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
