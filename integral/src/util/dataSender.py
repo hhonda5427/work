@@ -8,8 +8,6 @@ import os
 
 import pandas as pd
 from decorator.convertTable import ConvertTable
-
-
 from database.member import Members
 
 

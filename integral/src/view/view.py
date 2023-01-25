@@ -17,7 +17,7 @@ from util.shiftController import ShiftChannel
 
         
 ROWHEIGHT = 30
-COLUMNWIDTH = 20
+COLUMNWIDTH = 15
 
 
 shiftColors = {'A夜':QColor('#7FFFD4'), 'M夜':QColor('#7FFFD4'), 'C夜':QColor('#7FFFD4'),'明':QColor('#00FF00'), 
