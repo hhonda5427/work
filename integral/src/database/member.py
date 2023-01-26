@@ -16,8 +16,8 @@ class Person:
     staffid: str
     name: str
     dept: str
-    jobPerDay: dict[tuple[int, int, int, int], str]
-    requestPerDay: dict[tuple[int, int, int, int], str]
+    jobPerDay: dict[tuple[int, int, int], str]
+    requestPerDay: dict[tuple[int, int, int], str]
 
     def __init__(self, staffid: str, name: str) -> None:
         self.staffid = staffid
@@ -34,11 +34,11 @@ class Members:
     # 全職員で共通な情報
     # (year, month, day, dayofweek) のtupleにする
     date: datetime.datetime
-    #                        [( 年,  月,  日, 曜日)]
-    previous_month: list[tuple[int, int, int, int]]
-    now_month: list[tuple[int, int, int, int]]
-    next_month: list[tuple[int, int, int, int]]
-    day_previous_next: list[tuple[int, int, int, int]]
+    #                        [( 年,  月,  日)]
+    previous_month: list[tuple[int, int, int]]
+    now_month: list[tuple[int, int, int]]
+    next_month: list[tuple[int, int, int]]
+    day_previous_next: list[tuple[int, int, int]]
 
     def __init__(self):
         self.members = {}
