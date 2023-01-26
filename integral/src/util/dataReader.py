@@ -75,7 +75,7 @@ class DataReader(Members):
             self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
         self.now_next_month = self.now_month + [self.next_month[0]]
-
+        
         self.day_previous_next = self.previous_month + \
             self.now_month + [self.next_month[0]]
 

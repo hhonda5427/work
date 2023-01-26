@@ -39,6 +39,7 @@ class Members:
     now_month: list[tuple[int, int, int]]
     next_month: list[tuple[int, int, int]]
     day_previous_next: list[tuple[int, int, int]]
+    now_next_month: list[tuple[int, int, int]]
 
     def __init__(self):
         self.members = {}

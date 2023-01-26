@@ -15,17 +15,14 @@ from view.datamodel import *
 class MainWindow(QMainWindow):
     def __init__(self, shiftChannel: ShiftChannel):
         super().__init__()
-
+        
         self.rowHeaderModel = view.RowHeaderModel(shiftChannel)
         self.columnHeaderModel = view.ColumnHeaderModel(shiftChannel)
         self.shiftModel = view.ShiftModel(shiftChannel)
         self.countModel = view.CountModel(shiftChannel)
         
         self.yakinModel = yakinview.Model(shiftChannel)
-        # self.memberElemObserver = MemberElemObserver(
-        #     self.shiftModel, Model4Yakin(shiftCtrlChannel=shiftChannel))
 
-        # shiftChannel.addObserber(self.memberElemObserver)
         self.shiftModel.dataChanged.connect(self.yakinModel.refreshData)
         self.yakinModel.dataChanged.connect(self.shiftModel.refreshData)
 
@@ -34,16 +31,17 @@ class MainWindow(QMainWindow):
         self.shiftView = view.ShiftTableWidget( self.shiftModel,
                                                 self.rowHeaderModel,
                                                 self.columnHeaderModel,
-                                                self.countModel   
-                                                )
-        # self.yakinView = yakinview.nightshiftDialog(shiftChannel)
+                                                self.countModel)
+        
         self.yakinView = yakinview.nightshiftDialog(self.yakinModel)
+
         self.initUI()
 
         self.show()
         self.shiftView.show()
         self.yakinView.show()
 
+    
 
     def initUI(self):
 

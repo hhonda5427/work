@@ -37,6 +37,9 @@ class DataSender(Members):
         locale.setlocale(locale.LC_TIME, 'ja_JP')
         return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.now_month]
         
+    def strDate4Access(self, date):
+
+        return datetime.datetime.strftime(datetime.date(*date), '%Y/%m/%d')
 
     def getDf4Shimizu(self):
 
@@ -66,8 +69,8 @@ class DataSender(Members):
                     else:
                         df.at[strday, int(job)] = person.name
 
-        print(df.loc[:"2023-04-05", [1, 2]])
-        return df
+        # print(df.loc[:"2023-04-05", [1, 2]])
+        return df.where(df.notna(),'')
 
 
     # 本田さん向け
@@ -170,4 +173,17 @@ class DataSender(Members):
     def getDf4Iwasaki(self):
         pass
 
+    
+    def getAccessData(self):
+        data = []
+        for uid, person in self.members.items():
+            for date in self.now_next_month:
+                if (    date not in person.requestPerDay.keys() 
+                    and (person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)
+                    and uid < 900):
+                    job = ConvertTable.convertTable[person.jobPerDay[date]]
+                    line = [uid, self.strDate4Access(date), job]
 
+                    data.append(line) 
+
+        return data

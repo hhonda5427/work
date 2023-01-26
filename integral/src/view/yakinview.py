@@ -9,18 +9,12 @@ from util.shiftController import ShiftChannel
 
 
 class Model(QtCore.QAbstractTableModel):
-    changeTrigger = QtCore.pyqtSignal(QtCore.QModelIndex, str, str)
 
-
-    # def __init__(self, shiftChannel):
     def __init__(self, shiftChannel: ShiftChannel):
         super(Model, self).__init__()
         self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
-        # self.changeTrigger.connect(shiftChannel.updateMember)
-        # print(self._dataframe.loc[:"2023-04-05", [1, 2]])
         self.undoframe = self._dataframe.copy()
         self.shiftChannel = shiftChannel
-        # self.changeTrigger.connect(shiftChannel.updateMember)
         self.uidDict = {person.name : uid  for uid, person, in self.shiftChannel.shiftCtrl.members.items()}        
 
     def index(self, row, column, parent= QtCore.QModelIndex()):
@@ -53,37 +47,32 @@ class Model(QtCore.QAbstractTableModel):
 
 
     def setData(self, index, value, role= QtCore.Qt.EditRole):
-        if role == QtCore.Qt.EditRole:
-            # self.changeTrigger.emit(index, value, self.__class__.__name__)
-            # self._dataframe.iat[index.row(), index.column()] = value
+        if role == QtCore.Qt.EditRole and value in self.uidDict.keys():
             self._dataframe.iat[index.row(), index.column()] = value
             self.rewriteDatabase(index)
             self.dataChanged.emit(index, index)
             return True
+      
         return False   
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
         jobList = [4, 5, 6, 0, 1, 2, 3, 3]
-        newuid = self.uidDict[str(self._dataframe.iloc[index.row(), index.column()])]
-        olduid = self.uidDict[str(self.undoframe.iloc[index.row(), index.column()])]
+        newuid = self.uidDict[str(self._dataframe.iat[index.row(), index.column()])]
+        olduid = self.uidDict[str(self.undoframe.iat[index.row(), index.column()])]
         strdate = self.headerData(index.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
         date = datetime.datetime.strptime(strdate, '%Y-%m-%d')
         datetuple = tuple([date.year, date.month, date.day])
         
         job = jobList[index.column()]
-        print(str(self.undoframe.iloc[index.row(), index.column()]))       
+        oldjob = self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple]
         self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple] = str(job)
-        self.shiftChannel.shiftCtrl.members[olduid].jobPerDay[datetuple] = '12'
-        # i = 0
-        # for day, job in self.shiftChannel.shiftCtrl.members[newuid].jobPerDay.items():
-        #     print(f'{i}__{day}___{job}')
-        #     i += 1
+        self.shiftChannel.shiftCtrl.members[olduid].jobPerDay[datetuple] = oldjob
+
     def refreshData(self):
         print('refresh yakinhyou')
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
-    # def updateDF(self, newDF):
-    #     self._dataframe = newDF
+
 
 
 

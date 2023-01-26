@@ -12,9 +12,9 @@ from controller.delegate import modelEditDelegate
 app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
-# print(shiftChannel.shiftCtrl.getKinmuForm(DataName.kinmu))
 
-# delegate = modelEditDelegate()
+# print(shiftChannel.shiftCtrl.getAccessData())
+
 Window = MainWindow(shiftChannel)
 Window.show()
 
