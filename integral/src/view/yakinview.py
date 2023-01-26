@@ -1,9 +1,9 @@
 import os, sys
+import datetime
 import pandas as pd
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import *
-from pprint import pprint
-
+from util.shiftController import ShiftChannel
 # from integral.src.util.shiftController import ShiftChannel
 
 
@@ -12,11 +12,16 @@ class Model(QtCore.QAbstractTableModel):
     changeTrigger = QtCore.pyqtSignal(QtCore.QModelIndex, str, str)
 
 
-    def __init__(self, shiftChannel):
+    # def __init__(self, shiftChannel):
+    def __init__(self, shiftChannel: ShiftChannel):
         super(Model, self).__init__()
         self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
-        self.changeTrigger.connect(shiftChannel.updateMember)
-        print(self._dataframe.loc[:"2023-04-05", [1, 2]])
+        # self.changeTrigger.connect(shiftChannel.updateMember)
+        # print(self._dataframe.loc[:"2023-04-05", [1, 2]])
+        self.undoframe = self._dataframe.copy()
+        self.shiftChannel = shiftChannel
+        # self.changeTrigger.connect(shiftChannel.updateMember)
+        self.uidDict = {person.name : uid  for uid, person, in self.shiftChannel.shiftCtrl.members.items()}        
 
     def index(self, row, column, parent= QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -49,22 +54,48 @@ class Model(QtCore.QAbstractTableModel):
 
     def setData(self, index, value, role= QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
-            self.changeTrigger.emit(index, value, self.__class__.__name__)
+            # self.changeTrigger.emit(index, value, self.__class__.__name__)
+            # self._dataframe.iat[index.row(), index.column()] = value
             self._dataframe.iat[index.row(), index.column()] = value
+            self.rewriteDatabase(index)
+            self.dataChanged.emit(index, index)
             return True
         return False   
 
-    def updateDF(self, newDF):
-        self._dataframe = newDF
+    def rewriteDatabase(self, index):
+        # 名前からUIDを取得
+        jobList = [4, 5, 6, 0, 1, 2, 3, 3]
+        newuid = self.uidDict[str(self._dataframe.iloc[index.row(), index.column()])]
+        olduid = self.uidDict[str(self.undoframe.iloc[index.row(), index.column()])]
+        strdate = self.headerData(index.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
+        date = datetime.datetime.strptime(strdate, '%Y-%m-%d')
+        datetuple = tuple([date.year, date.month, date.day])
+        
+        job = jobList[index.column()]
+        print(str(self.undoframe.iloc[index.row(), index.column()]))       
+        self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple] = str(job)
+        self.shiftChannel.shiftCtrl.members[olduid].jobPerDay[datetuple] = '12'
+        # i = 0
+        # for day, job in self.shiftChannel.shiftCtrl.members[newuid].jobPerDay.items():
+        #     print(f'{i}__{day}___{job}')
+        #     i += 1
+    def refreshData(self):
+        print('refresh yakinhyou')
+        self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
+    # def updateDF(self, newDF):
+    #     self._dataframe = newDF
+
+
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
-    def __init__(self, shiftChannel, parent=None):
+    def __init__(self, yakinModel, parent=None):
+    # def __init__(self, shiftChannel, parent=None):
         super(nightshiftDialog, self).__init__(parent)
 
-        self._data = shiftChannel
-        self.model = Model(self._data)
-
+        # self._data = shiftChannel
+        # self.model = Model(self._data)
+        self.model = yakinModel
         self.initui()
         
 
@@ -72,7 +103,7 @@ class nightshiftDialog(QtWidgets.QDialog):
     def initui(self):
         self.view = QTableView()
         self.view.setModel(self.model)
-        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.view.doubleClicked.connect(self.dclickevent)
@@ -87,9 +118,10 @@ class nightshiftDialog(QtWidgets.QDialog):
         if item.data().isalpha() is False:
             # self.configdialog = candidate()
             # self.configdialog.show()
-            self.candidate = CandidateWidget(self._data, self.model, item)
-            self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.candidate.show()
+            # self.candidate = CandidateWidget(self._data, self.model, item)
+            # self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+            # self.candidate.show()
+            pass
             
     def fn_get_cell_Value(self, index):
         datas = index.data()
@@ -159,12 +191,12 @@ class CandidateWidget(QtWidgets.QWidget):
         # ダブルクリックしたセルから日付を取得
         targetDayS = self.targetRow - int(self.rk)
         targetDayE = targetDayS + 1
-        pprint(self.DFkinmuhyou)
+        # pprint(self.DFkinmuhyou)
         # 取得した日付で勤務表を成形
         self.DFkinmuhyou = self.DFkinmuhyou.iloc[:, [self.targetRow, self.targetRow+1]]
         # カラム[UID]を追加
         self.DFkinmuhyou['UID'] = self.DFkinmuhyou.index.values
-        pprint(self.DFkinmuhyou)
+        # pprint(self.DFkinmuhyou)
         # DFkinmuhyou_longからダブルクリックした日の勤務を抽出
         DFkinmuhyou_longS = self.DFkinmuhyou_long.iloc[:, [self.targetRow]]
         

@@ -6,5 +6,5 @@ tokaishiftschedule/
 __pychache__/
 shimizu/
 PyQtPractice/
-
+*/__pychache__/*
 
