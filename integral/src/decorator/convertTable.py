@@ -18,3 +18,9 @@ class ConvertTable:
 
             return dataFrame
         return wrapper
+
+    @staticmethod
+    def name2Id(name:str) -> int:
+        for key, value in ConvertTable.convertTable.items():
+            if name == value:
+                return int(key)

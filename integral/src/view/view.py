@@ -369,7 +369,7 @@ class ColumnHeaderModel(TableModel):
 
 class ShiftModel(TableModel):
 
-    changeTrigger = pyqtSignal(QModelIndex, str, str)
+    changeTrigger = pyqtSignal(int, str, str)
 
     def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
         super().__init__(self, parent, *args)
@@ -426,7 +426,11 @@ class ShiftModel(TableModel):
             
             self.dataChanged.emit(index, index)
 
-            self.changeTrigger.emit(index, value, self.__class__.__name__)
+            uid = list(self._data.index)[index.row()]
+            day = list(self._data.columns)[index.column()]
+            job = value
+            print(f'uid: {uid}, day: {day}, job: {job}')
+            self.changeTrigger.emit(uid, day, job)
 
             return True
 
