@@ -416,9 +416,11 @@ class ShiftModel(TableModel):
 
         if role == Qt.EditRole:
             
-            self._data.iat[index.row(), index.column()] = value
-            
+            self._kinmu.iat[index.row(), index.column()] = value
             self._color.iat[index.row(), index.column()] = shiftColors[value]
+
+            if value == '勤':
+                self._data.iat[index.row(), index.column()] = ''
             
             self.rewriteDatabase(index)
 
