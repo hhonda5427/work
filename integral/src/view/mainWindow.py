@@ -21,11 +21,15 @@ class MainWindow(QMainWindow):
         self.shiftModel = view.ShiftModel(shiftChannel)
         self.countModel = view.CountModel(shiftChannel)
         
+        self.yakinModel = yakinview.Model(shiftChannel)
+
         self.memberElemObserver = MemberElemObserver(
             self.shiftModel, Model4Yakin(shiftCtrlChannel=shiftChannel))
 
         shiftChannel.addObserber(self.memberElemObserver)
 
+        self.shiftModel.dataChanged.connect(self.yakinModel.refreshData)
+        self.yakinModel.dataChanged.connect(self.shiftModel.refreshData)
 
         self.resize(1500, 800)
 
@@ -34,13 +38,12 @@ class MainWindow(QMainWindow):
                                                 self.columnHeaderModel,
                                                 self.countModel   
                                                 )
-        self.yakinView = yakinview.nightshiftDialog(shiftChannel)
+        self.yakinView = yakinview.nightshiftDialog(self.yakinModel)
         self.initUI()
 
         self.show()
         self.shiftView.show()
         self.yakinView.show()
-
 
     def initUI(self):
 

@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime
 
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant, pyqtSignal
 from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent
@@ -17,7 +18,7 @@ from util.shiftController import ShiftChannel
 
         
 ROWHEIGHT = 30
-COLUMNWIDTH = 20
+COLUMNWIDTH = 25
 
 
 shiftColors = {'A夜':QColor('#7FFFD4'), 'M夜':QColor('#7FFFD4'), 'C夜':QColor('#7FFFD4'),'明':QColor('#00FF00'), 
@@ -369,37 +370,31 @@ class ColumnHeaderModel(TableModel):
 
 class ShiftModel(TableModel):
 
-    changeTrigger = pyqtSignal(QModelIndex, str, str)
+    # changeTrigger = pyqtSignal(QModelIndex, str, str)
 
     def __init__(self, shiftCtrlChannel: ShiftChannel, parent=None, *args):    
         super().__init__(self, parent, *args)
-        self._data = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
+        
         self._previous = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.previous)
         self._request = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.request)
-        self.rowHeader = self._data.index.values #shiftのindexの値を配列にする
+        self._kinmu = shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         
-        self._color = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._data.columns))] for i in range(len(self._data))])
-        self._textColor = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._data.columns))] for i in range(len(self._data))])
+        self.shiftCtrlChannel = shiftCtrlChannel
+        self._data = pd.DataFrame(data=[['' for j in range(len(self._kinmu.columns))] for i in range(len(self._kinmu))], index=self._kinmu.index.values.tolist(), columns=self._kinmu.columns.values.tolist())
+        self._color = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._kinmu.columns))] for i in range(len(self._kinmu))])
+        self._textColor = pd.DataFrame(data=[[QColor('#00000000') for j in range(len(self._kinmu.columns))] for i in range(len(self._kinmu))])
+        self.createDF()
         self.setBackgroundColors()
         self.setTextColors()
         # データを変えた時のイベント
-        self.changeTrigger.connect(shiftCtrlChannel.updateMember)
+        # self.changeTrigger.connect(shiftCtrlChannel.updateMember)
 
     def data(self, index: QModelIndex, role=Qt.ItemDataRole):
         if not index.isValid():
             return None
-        # print(f'{index.row()}___{index.column()}')
         value = self._data.iat[index.row(), index.column()]
-        previous = self._previous.iat[index.row(), index.column()]
-        request = self._request.iat[index.row(), index.column()]
 
         if role == Qt.DisplayRole:
-            if value == '勤':
-                value = None
-            if previous is not None:
-                value = previous
-            if request is not None:
-                value = request
             return value
 
         elif role == Qt.BackgroundRole:
@@ -422,20 +417,57 @@ class ShiftModel(TableModel):
         if role == Qt.EditRole:
             
             self._data.iat[index.row(), index.column()] = value
+            
             self._color.iat[index.row(), index.column()] = shiftColors[value]
             
+            self.rewriteDatabase(index)
+
             self.dataChanged.emit(index, index)
 
-            self.changeTrigger.emit(index, value, self.__class__.__name__)
+            # self.changeTrigger.emit(index, value, self.__class__.__name__)
 
             return True
 
         return False    
 
-    def updateDF(self, newDF):
-        self._data = newDF
+    def rewriteDatabase(self, index):
+        # 名前からUIDを取得
+        jobDict = {'休': 10 , '勤' : 8, 'A日' : 0, 'M日' : 1, 'C日' : 2, 'F日' : 3, 'A夜' : 4, 'M夜' : 5, 'C夜' : 6, '明' : 7}
+        uid = int(self.headerData(index.row(), Qt.Vertical, Qt.DisplayRole))
+        strdate = self.headerData(index.column(), Qt.Horizontal, Qt.DisplayRole)
+        print(strdate)
+        date = datetime.datetime.strptime(strdate, '%Y-%m-%d')
+        datetuple = tuple([date.year, date.month, date.day, date.weekday()])
+        job = jobDict[self._data.iat[index.row(), index.column()]]
+        self.shiftCtrlChannel.shiftCtrl.members[uid].jobPerDay[datetuple] = job
+        
+
+    def refreshData(self):
+        print('refresh kinmuhyou')
+        self._kinmu = self.shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
+        self.createDF()
+        self.setBackgroundColors()
+
+
+    # def updateDF(self, newDF):
+    #     self._data = newDF
 
     # previous, request, shift に応じた文字カラーを設定
+    def createDF(self):
+        for i in range(len(self._data)):
+            for j in range(len(self._data.columns)):        
+                value = self._kinmu.iat[i, j]
+                previous = self._previous.iat[i, j]
+                request = self._request.iat[i, j]        
+                if previous is not None:
+                    value = previous
+                elif request is not None:
+                    value = request
+                elif value == '勤':
+                    value = None
+                self._data.iat[i, j] = value
+
+
     def setTextColors(self):
 
         for i in range(len(self._data)):
