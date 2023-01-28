@@ -23,8 +23,10 @@ class MainWindow(QMainWindow):
         
         self.yakinModel = yakinview.Model(shiftChannel)
 
-        self.shiftModel.dataChanged.connect(self.yakinModel.refreshData)
-        self.yakinModel.dataChanged.connect(self.shiftModel.refreshData)
+        # self.shiftModel.dataChanged.connect(self.yakinModel.refreshData)
+        # self.yakinModel.dataChanged.connect(self.shiftModel.refreshData)
+        self.shiftModel.dataChanged.connect(self.refreshYakinTable)
+        self.yakinModel.dataChanged.connect(self.refreshKinmuTable)
 
         self.resize(1500, 800)
 
@@ -41,7 +43,6 @@ class MainWindow(QMainWindow):
         self.shiftView.show()
         self.yakinView.show()
 
-    
 
     def initUI(self):
 
@@ -79,6 +80,13 @@ class MainWindow(QMainWindow):
         else:
             view.show()
       
+    def refreshYakinTable(self):
+        self.yakinModel.refreshData()
+        self.yakinView.repaint()
+        
+    def refreshKinmuTable(self):
+        self.shiftModel.refreshData()
+        self.shiftView.repaint()
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         

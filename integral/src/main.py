@@ -13,7 +13,7 @@ app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
 
-# print(shiftChannel.shiftCtrl.getAccessData())
+print(shiftChannel.shiftCtrl.send2accdb())
 
 Window = MainWindow(shiftChannel)
 Window.show()

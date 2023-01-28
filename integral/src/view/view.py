@@ -52,7 +52,7 @@ class ShiftTableWidget(QWidget):
         self.shiftView.setSelectionMode(QAbstractItemView.SingleSelection)
         self.shiftView.setEditTriggers(QAbstractItemView.CurrentChanged)
         self.shiftView.setItemDelegate(ShiftDelegate())
-        self.shiftView.model().dataChanged.connect(self.onDataChanged)
+        # self.shiftView.model().dataChanged.connect(self.onDataChanged)
 
         self.scrollView = BaseView()
         self.scrollView.hide()
@@ -184,7 +184,6 @@ class BaseView(QTableView):
     def __init__(self, parent=None, *args):
         super().__init__()
         
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.verticalHeader().hide()
         self.horizontalHeader().hide()
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
@@ -398,10 +397,10 @@ class ShiftModel(TableModel):
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
-        jobDict = {'休': 10 , '勤' : 8, 'A日' : 0, 'M日' : 1, 'C日' : 2, 'F日' : 3, 'A夜' : 4, 'M夜' : 5, 'C夜' : 6, '明' : 7}
+        jobDict = {'休': '10' , '勤' : '8', '': '8', 'A日' : '0', 'M日' : '1', 'C日' : '2', 'F日' : '3', 'A夜' : '4', 'M夜' : '5', 'C夜' : '6', '明' : '7'}
         uid = int(self.headerData(index.row(), Qt.Vertical, Qt.DisplayRole))
         strdate = self.headerData(index.column(), Qt.Horizontal, Qt.DisplayRole)
-        print(strdate)
+        # print(strdate)
         date = datetime.datetime.strptime(strdate, '%Y-%m-%d')
         datetuple = tuple([date.year, date.month, date.day])
         job = jobDict[self._data.iat[index.row(), index.column()]]
@@ -413,6 +412,7 @@ class ShiftModel(TableModel):
         self._kinmu = self.shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         self.createDF()
         self.setBackgroundColors()
+
 
 
     def createDF(self):
