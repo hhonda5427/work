@@ -1,16 +1,13 @@
-import csv
 import datetime
 from enum import Enum, auto
 import locale
 import logging
-import math
-import os
+
 
 import pandas as pd
 from decorator.convertTable import ConvertTable
 
 
-from database.member import Members
 from util.dataReader import *
 
 
@@ -18,16 +15,16 @@ class DataName(Enum):
     kinmu = auto()
     request = auto()
     previous = auto()
+    DFNrdeptcore = auto()
+    RawDFNrdeptcore = auto()
+    DFCore = auto()
 
 
-class DataSender(Members):
-    """
-    できればmodelにはDFを当て込めたい
-    その際、各DFで共通する部分を連動させないといけないので要注意
-    """
+class DataSender(DataReader):
 
     def __init__(self):
         super().__init__()
+        self.rk = self.config['iota'][0] 
 
     def toHeader_fullspan(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
@@ -172,6 +169,86 @@ class DataSender(Members):
 
     def getDf4Iwasaki(self):
         pass
+
+    def getDFstaff(self):
+        uidL, staffidL, nameL = [], [], []
+        for uid, person in self.members.items():
+            uidL.append(uid)
+            staffidL.append(person.staffid)
+            nameL.append(person.name)
+        unsorted = pd.DataFrame({'No':uidL, 'ID':staffidL, 'Name':nameL})
+        return unsorted.sort_values(by=['No'], ascending=[True])
+
+    def getRawDFNrdeptcore(self, dataName: DataName):
+        uidL, deptL, rtL, mrL, tvL, ksL, nmL, xpL, ctL, xoL, agL, mgL, mtL=\
+            [], [], [], [], [],[], [], [], [], [], [], [], [], []  
+
+
+        for uid, person in self.members.items():
+            uidL.append(uid)
+            deptL.append(person.dept)
+            rtL.append(person.modalityN[0])
+            mrL.append(person.modalityN[1])
+            tvL.append(person.modalityN[2])
+            ksL.append(person.modalityN[3])
+            nmL.append(person.modalityN[4])
+            xpL.append(person.modalityN[5])
+            ctL.append(person.modalityN[6])
+            xoL.append(person.modalityN[7])
+            agL.append(person.modalityN[8])
+            mgL.append(person.modalityN[9])
+            mtL.append(person.modalityN[10])
+
+        baseDF = pd.DataFrame({'UID':uidL, 'Mo':deptL, \
+            'RT':rtL, 'MR':mrL, 'TV':tvL, 'KS':ksL, 'NM':nmL ,\
+            'XP':xpL, 'CT':ctL, 'XO':xoL, 'AG':agL, 'MG':mgL, 'MT':mtL})    
+        
+        if dataName == DataName.DFNrdeptcore:
+            return baseDF['UID':'Mo']
+        elif dataName == DataName.RawDFNrdeptcore:
+            return baseDF
+        elif dataName == DataName.DFCore:
+            coreDict = {}
+            coreDict['DFRTCore'] = baseDF.query('RT==6')
+            coreDict['DFMRCore'] = baseDF.query('MR==6')
+            coreDict['DFTVCore'] = baseDF.query('TV==6')
+            coreDict['DFKSCore'] = baseDF.query('KS==6')
+            coreDict['DFNMCore'] = baseDF.query('NM==6')
+            coreDict['DFXPCore'] = baseDF.query('XP==6')
+            coreDict['DFCTCore'] = baseDF.query('CT==6')
+            coreDict['DFXOCore'] = baseDF.query('XO==6')
+            coreDict['DFAGCore'] = baseDF.query('AG==6')
+            coreDict['DFMGCore'] = baseDF.query('MG==6')
+            coreDict['DFMTCore'] = baseDF.query('MT==6')
+            return coreDict 
+        else:
+            pass
+
+    def getDFSkill(self):
+        uidL, agNightL, mrNightL, ctNightL, fDayL, nightL, dayL = \
+            [], [], [], [], [], [], []
+        for uid, person in self.members.items():
+            uidL.append(uid)
+            agNightL.append(person.skill[0])
+            mrNightL.append(person.skill[1])
+            ctNightL.append(person.skill[2])
+            fDayL.append(person.skill[3])
+            nightL.append(person.skill[4])
+            dayL.append(person.skill[5])
+        return pd.DataFrame({'UID':uidL, 'A夜':agNightL, 'M夜':mrNightL, \
+            'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL})
+
+
+    def getDFShift(self):
+        uidL, dateL, jobL = [], [], []
+
+        for uid, person in self.members.items():
+            for day, job in person.jobPerDay.items():
+                if day >= (self.date.year, self.date.month, self.date.day) and day < self.next_month[0]:
+                    uidL.append(uid)
+                    dateL.append(int(day[2])-1)
+                    jobL.append(job)
+        return pd.DataFrame({'UID': uidL, 'Date': dateL, 'Job':jobL}) 
 
     
     def getAccessData(self):

@@ -16,6 +16,8 @@ class Person:
     staffid: str
     name: str
     dept: str
+    modalityN: list[int]
+    skill:list[int]
     jobPerDay: dict[tuple[int, int, int], str]
     requestPerDay: dict[tuple[int, int, int], str]
 

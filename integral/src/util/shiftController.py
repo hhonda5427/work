@@ -11,7 +11,7 @@ class Singleton():
             cls._instance = super(Singleton, cls).__new__(cls)
         return cls._instance
 
-class ShiftController(DataReader, DataSender, Singleton):
+class ShiftController(DataSender, Singleton):
     def __init__(self):
         super().__init__()
 

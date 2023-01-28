@@ -25,6 +25,8 @@ class DatNames(Enum):
     request = 'request.dat'
     previous = 'previous.dat'
     Nrdeptcore = 'Nrdeptcore.dat'
+    skill = 'skill.dat'
+    
 
 
 class DataReader(Members):
@@ -59,6 +61,7 @@ class DataReader(Members):
         for row in inputData:
             elem = row.rstrip('\n').split(',')
             data[elem[0]] = elem[1:]
+        self.config = data
 
         inputData.close()
 
@@ -176,7 +179,32 @@ class DataReader(Members):
                     self.members[int(uid)].requestPerDay[date] = job
 
         readingDat.close()
+        
+    def readSkill(self, datPath = ''):
+        """
+        uid, aN, mN, cN... 
+        2,0,0,0,0,0,0
+        4,0,0,0,0,0,0
+        98,0,0,0,0,0,0
+        97,0,0,0,2,0,2
+        96,0,0,0,0,0,0
+        5,0,0,0,0,0,0
+        6,0,0,2,2,0,2
+        7,0,0,0,0,0,
+        """
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath/ 
+                             DatNames.skill.value, 'r', encoding='utf-8-sig')
 
+        for row in inputData:
+            elem = row.rstrip('\n').split(',')
+            self.members[int(elem[0])].skill = elem[1:]
+        inputData.close()
+
+
+            
     def readNrdeptcore(self, datPath: str = ''):
         """
         次のようなデータ構造を想定しています
@@ -200,7 +228,7 @@ class DataReader(Members):
         for row in inputData:
             elem = row.rstrip('\n').split(',')
             self.members[int(elem[0])].dept = elem[1]
-
+            self.members[int(elem[0])].modalityN = elem[2:]
         inputData.close()
 
     def readConvertTable(self, datPath: str = ''):
