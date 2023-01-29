@@ -22,14 +22,26 @@ class DataName(Enum):
 
 class DataSender(DataReader):
 
+
+
     def __init__(self):
         super().__init__()
-        self.rk = self.config['iota'][0] 
+        self.rk = int(self.config['iota'][0])
+        self.kinmu_full = None 
+        
 
     def toHeader_fullspan(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
         return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.day_previous_next]
 
+    def toHeader_previous(self) -> list[str]:
+        locale.setlocale(locale.LC_TIME, 'ja_JP')
+        return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.previous_month]
+
+    def toHeader_now_next(self) -> list[str]:
+        locale.setlocale(locale.LC_TIME, 'ja_JP')
+        return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.now_next_month]
+    
     def toHeader_nowMonth(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
         return [datetime.datetime.strftime(datetime.date(*yyyymmdd), '%Y-%m-%d') for yyyymmdd in self.now_month]
@@ -70,7 +82,6 @@ class DataSender(DataReader):
         return df.where(df.notna(),'')
 
 
-    # 本田さん向け
     @ConvertTable.id2Name
     def getKinmuForm(self, dataName: DataName) -> pd.DataFrame:
         """ 
@@ -179,7 +190,7 @@ class DataSender(DataReader):
         unsorted = pd.DataFrame({'No':uidL, 'ID':staffidL, 'Name':nameL})
         return unsorted.sort_values(by=['No'], ascending=[True])
 
-    def getRawDFNrdeptcore(self, dataName: DataName):
+    def getNrdeptcore(self, dataName: DataName):
         uidL, deptL, rtL, mrL, tvL, ksL, nmL, xpL, ctL, xoL, agL, mgL, mtL=\
             [], [], [], [], [],[], [], [], [], [], [], [], [], []  
 
@@ -237,6 +248,63 @@ class DataSender(DataReader):
             dayL.append(person.skill[5])
         return pd.DataFrame({'UID':uidL, 'A夜':agNightL, 'M夜':mrNightL, \
             'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL})
+
+    @ConvertTable.id2Name
+    def getDFKinmuOnly(self):
+        df = pd.DataFrame(None, columns=self.toHeader_now_next(), index=self.members.keys())
+        for uid, person in self.members.items():
+                for day, job in person.jobPerDay.items():
+                    strday :str = datetime.datetime.strftime(datetime.date(*day), '%Y-%m-%d')
+                    if day >= (self.date.year, self.date.month, self.date.day):
+                        df.at[uid, strday] = job
+        return df
+ 
+    @ConvertTable.id2Name
+    def getDFPreviousOnly(self):
+        df = pd.DataFrame(None, columns=self.toHeader_previous(), index=self.members.keys())
+        for uid, person in self.members.items():
+                for day, job in person.jobPerDay.items():
+                    strday :str = datetime.datetime.strftime(datetime.date(*day), '%Y-%m-%d')
+                    if day < (self.date.year, self.date.month, self.date.day):
+                        df.at[uid, strday] = job
+        return df
+
+    def getDFKinmuFull(self):
+        previous = self.getDFPreviousOnly()
+        now_next = self.getDFKinmuOnly()
+        self.kinmu_full = pd.merge(previous, now_next)
+        return self.kinmu_full 
+        
+    def getDFRenzoku(self):
+        try:
+            if df == None:
+                raise damagedDataError
+            df = self.kinmu_full
+        except damagedDataError:
+            df = self.getDFKinmuFull()
+        except NameError as ex:
+            df = self.getDFKinmuFull()
+        except AttributeError as ex:
+            df = self.getDFKinmuFull()
+        
+        df.replace(['7', '40', '41', '10', '50', '11', '60', '61', '63'], None, inplace=True)
+        df.replace(['0', '1', '2', '3', '4', '5', '6', '8', '9', '62', '12'], '1', inplace=True)
+
+
+        # df.replace(['明', '張', '援', '他' ,'休', '振' ,'夏', '特' ,'年', '暇'], None, inplace=True)
+        # df.replace(['A日', 'M日', 'C日','A夜','M夜','C夜','勤','半','ダ'], 1, inplace=True)
+        
+        df.columns = [i - self.rk for i in range(len(self.day_previous_next))]
+        df.index = [uid for uid in self.members.keys()]
+        # # renzokuDF = pd.DataFrame(columns=[i-self.rk for i in range(len(self.day_previous_next))],\
+        #      index=list(self.members.keys()))
+        # for uid, person in self.members.items():
+        #     for i, job in enumerate(person.jobPerDay.values()):
+        #         if job in ["7", "9", "40", "41", "10", "50", "11", "60", "61", "63"]:
+        #             renzokuDF.at[uid, i - self.rk] = None                    
+        #         else:
+        #             renzokuDF.at[uid, i - self.rk] = 1                    
+        return df 
 
 
     def getDFShift(self):

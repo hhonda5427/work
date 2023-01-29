@@ -12,9 +12,7 @@ from controller.delegate import modelEditDelegate
 app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
-print(shiftChannel.shiftCtrl.getDFshift())
 # print(shiftChannel.shiftCtrl.getAccessData())
-
 Window = MainWindow(shiftChannel)
 Window.show()
 
