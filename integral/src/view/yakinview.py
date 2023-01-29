@@ -72,9 +72,7 @@ class Model(QtCore.QAbstractTableModel):
     def refreshData(self):
         print('refresh yakinhyou')
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
-        
-
-
+ 
 
 
 # 夜勤表

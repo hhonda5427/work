@@ -414,8 +414,8 @@ class ShiftModel(TableModel):
         self.setBackgroundColors()
 
 
-
     def createDF(self):
+        
         for i in range(len(self._data)):
             for j in range(len(self._data.columns)):        
                 value = self._kinmu.iat[i, j]
@@ -428,8 +428,8 @@ class ShiftModel(TableModel):
                 elif value == '勤':
                     value = None
                 self._data.iat[i, j] = value
-
-
+                
+                
     # previous, request, shift に応じた文字カラーを設定
     def setTextColors(self):
 

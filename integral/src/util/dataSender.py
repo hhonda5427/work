@@ -208,7 +208,7 @@ class DataSender(Members):
             job = record[2]
             updating = datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S')
             operator = "admin"
-            print(f'{uid}__{workdate}__{job}__{updating}__{operator}')
+            # print(f'{uid}__{workdate}__{job}__{updating}__{operator}')
             sql = (
                 f"SELECT count(*) "
                 f"FROM tblShift "
@@ -217,14 +217,12 @@ class DataSender(Members):
             cursor.execute(sql)
             
             if cursor.fetchone()[0] > 0:
-                print('exist')
                 sql = (
                     f"UPDATE tblShift "
                     f"SET shift = '{job}', updating = #{updating}#, operator = '{operator}' "
                     f"WHERE uid = {uid} AND workdate = #{workdate}#"
                 )
             else:
-                print("not exist")
                 sql = (
                     f"INSERT INTO tblShift "
                     f"(uid, workdate, shift, updating, operator) "
