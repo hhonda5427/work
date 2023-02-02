@@ -173,10 +173,14 @@ class ShiftTableWidget(QWidget):
 
         row = index.row()
         column = index.column()
+        rowCount = self.shiftView.model().rowCount()
         data = self.shiftView.model()._data.iat[index.row(), index.column()]
         uid = self.shiftView.model().headerData(row, Qt.Vertical, Qt.DisplayRole)
         date = self.shiftView.model().headerData(column, Qt.Horizontal, Qt.DisplayRole)
-
+        df = self.shiftView.model().copy()
+        print(df)
+        for i in range(rowCount):
+            print(self.shiftView.model()._data.iat[i, index.column()])
         print(f'{row}___{column}__{data}__{uid}___{date}')
         
 class BaseView(QTableView):
