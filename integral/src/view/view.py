@@ -52,7 +52,7 @@ class ShiftTableWidget(QWidget):
         self.shiftView.setSelectionMode(QAbstractItemView.SingleSelection)
         self.shiftView.setEditTriggers(QAbstractItemView.CurrentChanged)
         self.shiftView.setItemDelegate(ShiftDelegate())
-        # self.shiftView.model().dataChanged.connect(self.onDataChanged)
+        self.shiftView.model().dataChanged.connect(self.onDataChanged)
 
         self.scrollView = BaseView()
         self.scrollView.hide()
@@ -170,7 +170,8 @@ class ShiftTableWidget(QWidget):
         '''
         ここに休日などをカウントする関数を記述する
         '''
-
+        model = self.shiftView.model().copy()
+        print(model)
         row = index.row()
         column = index.column()
         data = self.shiftView.model()._data.iat[index.row(), index.column()]
@@ -471,6 +472,8 @@ class ShiftModel(TableModel):
 
             return False
 
+    def copy(self):
+        return self._data.copy()
 
 class ShiftDelegate(QStyledItemDelegate):
     

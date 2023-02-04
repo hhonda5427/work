@@ -78,10 +78,10 @@ class Model(QtCore.QAbstractTableModel):
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
     def __init__(self, yakinModel, parent=None):
-    # def __init__(self, shiftChannel, parent=None):
+    # def __init__(self, yakinModel, shiftChannel, parent=None):
         super(nightshiftDialog, self).__init__(parent)
 
-        # self._data = shiftChannel
+        # self.shiftChannnel = shiftChannel
         # self.model = Model(self._data)
         self.model = yakinModel
         self.initui()
