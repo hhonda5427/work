@@ -8,3 +8,6 @@ shimizu/
 PyQtPractice/
 */__pychache__/*
 pulpscheduling/
+.settings.json
+work/
+settings.json

@@ -1,10 +1,14 @@
 import json
 import os
+import pathlib
 
 def readSettingJson(filename):
-    root_dir = os.getcwd()
+    # .exeの場合　
+    # root_dir = os.getcwd()
+    # main.pyの場合
+    root_dir = pathlib.Path(__file__).parents[1]
     path = os.path.join(root_dir, 'settings.json')
-    print(f'readfile_{path}')
+
     if os.path.isfile(path):
 
         json_open = open(path, 'r', encoding='utf-8')
@@ -12,6 +16,6 @@ def readSettingJson(filename):
 
         return json_data[filename]
 
-    return ''
+    return 'no file'
 
 
