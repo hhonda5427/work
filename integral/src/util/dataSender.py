@@ -5,11 +5,10 @@ import logging
 
 
 import pandas as pd
-from decorator.convertTable import ConvertTable
+from decorator.convertTable import *
 
 
 from util.dataReader import *
-
 
 class DataName(Enum):
     kinmu = auto()
@@ -235,17 +234,26 @@ class DataSender(DataReader):
         else:
             pass
 
+    @Debugger.toCSV
     def getDFSkill(self):
         uidL, agNightL, mrNightL, ctNightL, fDayL, nightL, dayL = \
             [], [], [], [], [], [], []
         for uid, person in self.members.items():
-            uidL.append(uid)
-            agNightL.append(person.skill[0])
-            mrNightL.append(person.skill[1])
-            ctNightL.append(person.skill[2])
-            fDayL.append(person.skill[3])
-            nightL.append(person.skill[4])
-            dayL.append(person.skill[5])
+            try:
+                if uid >= 900:
+                    continue
+                uidL.append(uid)
+                agNightL.append(person.skill[0])
+                mrNightL.append(person.skill[1])
+                ctNightL.append(person.skill[2])
+                fDayL.append(person.skill[3])
+                nightL.append(person.skill[4])
+                dayL.append(person.skill[5])
+            except IndexError as ex :
+                print(uid)
+                print(person.skill)
+                print(ex)
+                continue
         return pd.DataFrame({'UID':uidL, 'A夜':agNightL, 'M夜':mrNightL, \
             'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL})
 
@@ -269,10 +277,11 @@ class DataSender(DataReader):
                         df.at[uid, strday] = job
         return df
 
+    @Debugger.toCSV
     def getDFKinmuFull(self):
         previous = self.getDFPreviousOnly()
         now_next = self.getDFKinmuOnly()
-        self.kinmu_full = pd.merge(previous, now_next)
+        self.kinmu_full = pd.concat([previous, now_next], axis=1)
         return self.kinmu_full 
         
     def getDFRenzoku(self):
@@ -328,7 +337,10 @@ class DataSender(DataReader):
                     and uid < 900):
                     job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
-
+                    
                     data.append(line) 
 
         return data
+   #dfrenzoku
+    #dfskill
+    #dfkinmuhyou_long

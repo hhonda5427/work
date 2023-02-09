@@ -1,6 +1,9 @@
 
+from pathlib import Path
 from typing import Union
 import pandas as pd
+
+from settings.settings import LOG_PATH
 
 
 class ConvertTable:
@@ -24,3 +27,14 @@ class ConvertTable:
         for key, value in ConvertTable.convertTable.items():
             if name == value:
                 return int(key)
+                
+class Debugger:
+    root = Path(LOG_PATH)
+
+    @staticmethod
+    def toCSV(func):
+        def wrapper(*args, **kwargs):
+            result:pd.DataFrame = func(*args, **kwargs)
+            result.to_csv(Debugger.root / Path(func.__name__ + '.csv'))
+            return result
+        return wrapper      

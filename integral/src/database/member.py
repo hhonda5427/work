@@ -24,9 +24,13 @@ class Person:
     def __init__(self, staffid: str, name: str) -> None:
         self.staffid = staffid
         self.name = name
+        self.dept = ""
+        self.modalityN = []
+        self.skill = []
         self.jobPerDay = {}
         self.requestPerDay = {}
-        self.dept = ""
+
+        
 
 
 # @dataclass(slots=True)
