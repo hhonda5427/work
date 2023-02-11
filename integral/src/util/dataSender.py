@@ -239,9 +239,9 @@ class DataSender(DataReader):
         uidL, agNightL, mrNightL, ctNightL, fDayL, nightL, dayL = \
             [], [], [], [], [], [], []
         for uid, person in self.members.items():
-            try:
-                if uid >= 900:
-                    continue
+
+            if uid < 900:
+
                 uidL.append(uid)
                 agNightL.append(person.skill[0])
                 mrNightL.append(person.skill[1])
@@ -249,15 +249,12 @@ class DataSender(DataReader):
                 fDayL.append(person.skill[3])
                 nightL.append(person.skill[4])
                 dayL.append(person.skill[5])
-            except IndexError as ex :
-                print(uid)
-                print(person.skill)
-                print(ex)
-                continue
-        return pd.DataFrame({'UID':uidL, 'A夜':agNightL, 'M夜':mrNightL, \
-            'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL})
+
+        d = {'A夜':agNightL, 'M夜':mrNightL, 'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL}
+        return pd.DataFrame(data=d, index=uidL)
 
     @ConvertTable.id2Name
+
     def getDFKinmuOnly(self):
         df = pd.DataFrame(None, columns=self.toHeader_now_next(), index=self.members.keys())
         for uid, person in self.members.items():
@@ -267,7 +264,7 @@ class DataSender(DataReader):
                         df.at[uid, strday] = job
         return df
  
-    @ConvertTable.id2Name
+    # @ConvertTable.id2Name
     def getDFPreviousOnly(self):
         df = pd.DataFrame(None, columns=self.toHeader_previous(), index=self.members.keys())
         for uid, person in self.members.items():
@@ -281,6 +278,7 @@ class DataSender(DataReader):
     def getDFKinmuFull(self):
         previous = self.getDFPreviousOnly()
         now_next = self.getDFKinmuOnly()
+
         self.kinmu_full = pd.concat([previous, now_next], axis=1)
         return self.kinmu_full 
         
@@ -295,9 +293,12 @@ class DataSender(DataReader):
             df = self.getDFKinmuFull()
         except AttributeError as ex:
             df = self.getDFKinmuFull()
-        
-        df.replace(['7', '40', '41', '10', '50', '11', '60', '61', '63'], None, inplace=True)
-        df.replace(['0', '1', '2', '3', '4', '5', '6', '8', '9', '62', '12'], '1', inplace=True)
+        offList = ['10', '11', '50', '60', '61', '62', '63']
+        workList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', \
+                    '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', \
+                    '31', '32', '33', '34', '40', '41','62', '12']
+        df.replace(['10', '11', '50', '60', '61', '62', '63'], None, inplace=True)
+        df.replace(workList, '1', inplace=True)
 
 
         # df.replace(['明', '張', '援', '他' ,'休', '振' ,'夏', '特' ,'年', '暇'], None, inplace=True)

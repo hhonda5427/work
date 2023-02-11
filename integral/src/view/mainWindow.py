@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
                                                 self.columnHeaderModel,
                                                 self.countModel)
         
-        self.yakinView = yakinview.nightshiftDialog(self.yakinModel)
+        self.yakinView = yakinview.nightshiftDialog(self.yakinModel, shiftChannel)
 
         self.initUI()
 

@@ -78,12 +78,11 @@ class Model(QtCore.QAbstractTableModel):
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
-    def __init__(self, yakinModel, parent=None):
+    def __init__(self, yakinModel, shiftChannel:ShiftChannel, parent=None):
     # def __init__(self, shiftChannel, parent=None):
         super(nightshiftDialog, self).__init__(parent)
 
-        # self._data = shiftChannel
-        # self.model = Model(self._data)
+        self.shiftChannel = shiftChannel
         self.model = yakinModel
         self.initui()
         
@@ -92,7 +91,7 @@ class nightshiftDialog(QtWidgets.QDialog):
     def initui(self):
         self.view = QTableView()
         self.view.setModel(self.model)
-        # self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.view.doubleClicked.connect(self.dclickevent)
@@ -107,10 +106,10 @@ class nightshiftDialog(QtWidgets.QDialog):
         if item.data().isalpha() is False:
             # self.configdialog = candidate()
             # self.configdialog.show()
-            # self.candidate = CandidateWidget(self._data, self.model, item)
+            self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
             # self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
             # self.candidate.show()
-            pass
+            
             
     def fn_get_cell_Value(self, index):
         datas = index.data()
@@ -121,37 +120,32 @@ nightModel = nightshiftdialogで使用しているモデル
 nightIndex = nightshiftdialogで使用しているモデルのインデックス
 '''
 class CandidateWidget(QtWidgets.QWidget):
-    def __init__(self, src, nightModel:Model, nightIndex:QtCore.QModelIndex, parent=None):
+    def __init__(self, shiftChannel:ShiftChannel, nightModel:Model, nightIndex:QtCore.QModelIndex, parent=None):
         super().__init__(parent)
         
-        self.rk = src.rk
-        self.dfshift = src.dfshift.copy()
-        self.dfskill = src.dfskill.copy()
-        self.DFrenzoku = src.DFrenzoku.copy()
-        self.DFkinmuhyou = src.DFkinmuhyou.copy()
-        self.DFkinmuhyou_long = src.DFkinmuhyou.copy()
-        self.dfstaff = src.dfstaff.copy()
-        self.DFNrdeptcore = src.DFNrdeptcore.copy()
-        self.RawDFNrdeptcore = src.RawDFNrdeptcore.copy() 
-        self.DFCore = src.DFCore.copy()
-        self.nightshiftModel = nightModel
-        self.nightshiftModelIndex = nightIndex
 
-        self.targetRow = nightIndex.row() + int(self.rk)
-        self.targetColumn = nightIndex.column()
-        self.targetData = nightIndex.data()
+        # self.nightshiftModel = nightModel
+        # self.nightshiftModelIndex = nightIndex
 
-        self.data = self.createCandidate()
-        self.model =Model(self.data)
-        self.view = QTableView()
-        self.view.setModel(self.model)
-        self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-        self.view.doubleClicked.connect(self.dclickevent)
+        # self.targetRow = nightIndex.row() + int(self.rk)
+        # self.targetColumn = nightIndex.column()
+        # self.targetData = nightIndex.data()
 
-        layout = QHBoxLayout()
-        layout.addWidget(self.view)
-        self.setLayout(layout)
+        self.dfskill =  shiftChannel.shiftCtrl.getDFSkill()
+        self.DFrenzoku =  shiftChannel.shiftCtrl.getDFRenzoku()
+        
+        print(self.DFrenzoku)
+        # self.data = self.createCandidate()
+        # self.model =Model(self.data)
+        # self.view = QTableView()
+        # self.view.setModel(self.model)
+        # self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        # self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        # self.view.doubleClicked.connect(self.dclickevent)
+
+        # layout = QHBoxLayout()
+        # layout.addWidget(self.view)
+        # self.setLayout(layout)
 
     def dclickevent(self, index):
 

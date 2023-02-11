@@ -40,8 +40,7 @@ class DataReader(Members):
         self.readNrdeptcore()
         self.readConvertTable()
         self.readSkill()
-    
-        
+
 
     def readConfigvar(self, datPath: str = ''):
         """次のようなデータ構造を想定しています
