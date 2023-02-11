@@ -5,11 +5,10 @@ import logging
 
 
 import pandas as pd
-from decorator.convertTable import ConvertTable
+from decorator.convertTable import *
 
 
 from util.dataReader import *
-
 
 class DataName(Enum):
     kinmu = auto()
@@ -235,11 +234,14 @@ class DataSender(DataReader):
         else:
             pass
 
+    @Debugger.toCSV
     def getDFSkill(self):
         uidL, agNightL, mrNightL, ctNightL, fDayL, nightL, dayL = \
             [], [], [], [], [], [], []
         for uid, person in self.members.items():
+
             if uid < 900:
+
                 uidL.append(uid)
                 agNightL.append(person.skill[0])
                 mrNightL.append(person.skill[1])
@@ -247,10 +249,12 @@ class DataSender(DataReader):
                 fDayL.append(person.skill[3])
                 nightL.append(person.skill[4])
                 dayL.append(person.skill[5])
+
         d = {'A夜':agNightL, 'M夜':mrNightL, 'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL}
         return pd.DataFrame(data=d, index=uidL)
 
-    # @ConvertTable.id2Name
+    @ConvertTable.id2Name
+
     def getDFKinmuOnly(self):
         df = pd.DataFrame(None, columns=self.toHeader_now_next(), index=self.members.keys())
         for uid, person in self.members.items():
@@ -270,6 +274,7 @@ class DataSender(DataReader):
                         df.at[uid, strday] = job
         return df
 
+    @Debugger.toCSV
     def getDFKinmuFull(self):
         previous = self.getDFPreviousOnly()
         now_next = self.getDFKinmuOnly()
@@ -333,7 +338,10 @@ class DataSender(DataReader):
                     and uid < 900):
                     job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
-
+                    
                     data.append(line) 
 
         return data
+   #dfrenzoku
+    #dfskill
+    #dfkinmuhyou_long

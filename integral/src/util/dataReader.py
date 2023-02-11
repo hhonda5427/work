@@ -41,6 +41,7 @@ class DataReader(Members):
         self.readConvertTable()
         self.readSkill()
 
+
     def readConfigvar(self, datPath: str = ''):
         """次のようなデータ構造を想定しています
         date,2023/04/01
@@ -193,6 +194,7 @@ class DataReader(Members):
         6,0,0,2,2,0,2
         7,0,0,0,0,0,
         """
+        
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
