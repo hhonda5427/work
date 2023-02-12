@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
     def __init__(self, shiftChannel: ShiftChannel):
         super().__init__()
         
+        self.shiftChannel = shiftChannel
         self.rowHeaderModel = view.RowHeaderModel(shiftChannel)
         self.columnHeaderModel = view.ColumnHeaderModel(shiftChannel)
         self.shiftModel = view.ShiftModel(shiftChannel)
@@ -23,8 +24,9 @@ class MainWindow(QMainWindow):
         
         self.yakinModel = yakinview.Model(shiftChannel)
 
-        self.shiftModel.dataChanged.connect(self.yakinModel.refreshData)
-        self.yakinModel.dataChanged.connect(self.shiftModel.refreshData)
+        self.shiftModel.dataChanged.connect(self.refreshYakinTable)
+        self.yakinModel.dataChanged.connect(self.refreshKinmuTable)
+
 
         self.resize(1500, 800)
 
@@ -79,6 +81,14 @@ class MainWindow(QMainWindow):
         else:
             view.show()
       
+    def refreshYakinTable(self):
+        self.yakinModel.refreshData()
+        self.yakinView.view.viewport().update()
+
+    def refreshKinmuTable(self):
+
+        self.shiftModel.refreshData()
+        self.shiftView.shiftView.viewport().update()
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         
@@ -92,7 +102,12 @@ class MainWindow(QMainWindow):
         ここに勤務表データベースへの登録用コードを書く
         '''
         print("register")
-
+        ret = QMessageBox.information(None, "登録確認", "勤務表をデータベースに登録しますか", 
+                                     QMessageBox.Yes, QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            self.shiftChannel.shiftCtrl.send2accdb()
+        elif ret == QMessageBox.No:
+            pass
 
 
 class MemberElemObserver(Observer):

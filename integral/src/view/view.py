@@ -382,9 +382,10 @@ class ShiftModel(TableModel):
 
         if role == Qt.EditRole:
             
+            self._data.iat[index.row(), index.column()] = value
             self._kinmu.iat[index.row(), index.column()] = value
             self._color.iat[index.row(), index.column()] = shiftColors[value]
-            self._data.iat[index.row(), index.column()] = value
+            
             if value == '勤':
                 self._data.iat[index.row(), index.column()] = ''
 
@@ -398,18 +399,18 @@ class ShiftModel(TableModel):
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
-        jobDict = {'休': 10 , '勤' : 8, 'A日' : 0, 'M日' : 1, 'C日' : 2, 'F日' : 3, 'A夜' : 4, 'M夜' : 5, 'C夜' : 6, '明' : 7}
+        jobDict = {'休':'10', '勤':'8', '':'8', 'A日':'0', 'M日':'1', 'C日':'2', 'F日':'3', 'A夜':'4', 'M夜':'5', 'C夜':'6', '明':'7'}
         uid = int(self.headerData(index.row(), Qt.Vertical, Qt.DisplayRole))
         strdate = self.headerData(index.column(), Qt.Horizontal, Qt.DisplayRole)
-        print(strdate)
+        # print(strdate)
         date = datetime.datetime.strptime(strdate, '%Y-%m-%d')
         datetuple = tuple([date.year, date.month, date.day])
         job = jobDict[self._data.iat[index.row(), index.column()]]
+
         self.shiftCtrlChannel.shiftCtrl.members[uid].jobPerDay[datetuple] = job
 
 
     def refreshData(self):
-        print('refresh kinmuhyou')
         self._kinmu = self.shiftCtrlChannel.shiftCtrl.getKinmuForm(DataName.kinmu)
         self.createDF()
         self.setBackgroundColors()
@@ -471,6 +472,8 @@ class ShiftModel(TableModel):
 
             return False
 
+    def copy(self):
+        return self._data.copy()
 
 class ShiftDelegate(QStyledItemDelegate):
     

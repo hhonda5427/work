@@ -58,7 +58,7 @@ class Model(QtCore.QAbstractTableModel):
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
-        jobList = [4, 5, 6, 0, 1, 2, 3, 3]
+        jobList = ['4', '5', '6', '0', '1', '2', '3', '3']
         newuid = self.uidDict[str(self._dataframe.iat[index.row(), index.column()])]
         olduid = self.uidDict[str(self.undoframe.iat[index.row(), index.column()])]
         strdate = self.headerData(index.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
@@ -67,11 +67,11 @@ class Model(QtCore.QAbstractTableModel):
         
         job = jobList[index.column()]
         oldjob = self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple]
-        self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple] = str(job)
+        self.shiftChannel.shiftCtrl.members[newuid].jobPerDay[datetuple] = job
         self.shiftChannel.shiftCtrl.members[olduid].jobPerDay[datetuple] = oldjob
 
     def refreshData(self):
-        print('refresh yakinhyou')
+
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
 
 
@@ -92,7 +92,7 @@ class nightshiftDialog(QtWidgets.QDialog):
     def initui(self):
         self.view = QTableView()
         self.view.setModel(self.model)
-        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.view.doubleClicked.connect(self.dclickevent)
