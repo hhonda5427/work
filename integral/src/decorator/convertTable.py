@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Union
 import pandas as pd
 
-from settings.settings import LOG_PATH
+from settings.settings import *
 
 
 class ConvertTable:
@@ -29,7 +29,7 @@ class ConvertTable:
                 return int(key)
                 
 class Debugger:
-    root = Path(LOG_PATH)
+    root = readSettingJson('LOG_DIR')
 
     @staticmethod
     def toCSV(func):

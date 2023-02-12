@@ -26,14 +26,13 @@ class DatNames(Enum):
     previous = 'previous.dat'
     Nrdeptcore = 'Nrdeptcore.dat'
     skill = 'skill.dat'
-    
-
 
 class DataReader(Members):
 
     def __init__(self) :
         super().__init__()
-        self.rootPath = pathlib.Path(ROOT_PATH)
+        # self.rootPath = pathlib.Path(ROOT_PATH)
+        self.rootPath = readSettingJson('DATA_DIR')
         self.readConfigvar()
         self.readStaffInfo()
         self.applyShift2Member()
@@ -56,8 +55,8 @@ class DataReader(Members):
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            inputData = open(self.rootPath/ 
-                             DatNames.configvar.value, 'r', encoding='utf-8-sig')
+            path = os.path.join(self.rootPath, DatNames.configvar.value)
+            inputData = open(path, 'r', encoding='utf-8-sig')
 
         data = {}
         for row in inputData:
@@ -100,9 +99,9 @@ class DataReader(Members):
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            inputData = open(self.rootPath/ 
-                             DatNames.staffinfo.value, 'r', encoding='utf-8-sig')
-
+            path = os.path.join(self.rootPath, DatNames.staffinfo.value)
+            inputData = open(path, 'r', encoding='utf-8-sig')
+            
         for row in inputData:
             try:
                 uid, staffid, name = row.rstrip('\n').split(',')
@@ -130,20 +129,14 @@ class DataReader(Members):
         self.dat2Member(DatNames.shift, self.now_next_month)
         self.dat2Member(DatNames.previous, self.previous_month)
         self.dat2Member(DatNames.request, self.now_next_month)
-        # print(self.day_previous_next )
-
-
-        # self.day_previous_next = self.day_previous_next[self.day_previous_next.index((self.date.year, self.date.month, self.date.day, self.date.weekday()))-mindate-1:]
-
-
         return self
 
     def dat2Member(self, readDatName: DatNames, month_calendar: list[tuple[int, int, int, int]], datPath=''):
         try:
             readingDat = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            readingDat = open(self.rootPath/ 
-                              readDatName.value, 'r', encoding='utf-8-sig')
+            path = os.path.join(self.rootPath, readDatName.value)
+            readingDat = open(path, 'r', encoding='utf-8-sig')
 
         for row in readingDat:
             
@@ -198,8 +191,8 @@ class DataReader(Members):
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            inputData = open(self.rootPath/ 
-                             DatNames.skill.value, 'r', encoding='utf-8-sig')
+            path = os.path.join(self.rootPath, DatNames.skill.value)
+            inputData = open(path, 'r', encoding='utf-8-sig')
 
         for row in inputData:
             elem = row.rstrip('\n').split(',')
@@ -225,8 +218,8 @@ class DataReader(Members):
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            inputData = open(self.rootPath/ 
-                             DatNames.Nrdeptcore.value, 'r', encoding='utf-8-sig')
+            path = os.path.join(self.rootPath, DatNames.Nrdeptcore.value)
+            inputData = open(path, 'r', encoding='utf-8-sig')
 
         for row in inputData:
             elem = row.rstrip('\n').split(',')
@@ -248,8 +241,8 @@ class DataReader(Members):
         try:
             inputData = open(datPath, 'r', encoding='utf-8-sig')
         except FileNotFoundError as ex:
-            inputData = open(self.rootPath/ 
-                             DatNames.convertTable.value, 'r', encoding='utf-8-sig')
+            path = os.path.join(self.rootPath, DatNames.convertTable.value)
+            inputData = open(path, 'r', encoding='utf-8-sig')
 
         for row in inputData:
             try:
@@ -268,7 +261,8 @@ class JapanHoliday():
     """
     
     def __init__(self, encoding='cp932'):
-        _path = os.path.join(ROOT_PATH,'syukujitsu.csv')
+        dir = readSettingJson('DATA_DIR')
+        _path = os.path.join(dir,'syukujitsu.csv')
         self._holidays = self._read_holiday(_path, encoding)
  
     def _read_holiday(self, path, encoding):

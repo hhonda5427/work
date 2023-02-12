@@ -3,7 +3,7 @@ from enum import Enum, auto
 import locale
 import logging
 
-
+import pyodbc
 import pandas as pd
 from decorator.convertTable import *
 
@@ -64,7 +64,7 @@ class DataSender(DataReader):
     日付 *uid
     
     """
-
+    @Debugger.toCSV 
     def getYakinForm(self) -> pd.DataFrame:
         # df.at[strday, int(job)] is not None
         # math.isnan(df.at[strday, int(job)])
@@ -180,7 +180,7 @@ class DataSender(DataReader):
     def getDf4Iwasaki(self):
         pass
 
-    @Debugger.toCSV   
+    # @Debugger.toCSV   
     def getDFstaff(self):
         uidL, staffidL, nameL = [], [], []
         for uid, person in self.members.items():
@@ -242,7 +242,7 @@ class DataSender(DataReader):
         else:
             pass
 
-    @Debugger.toCSV
+    # @Debugger.toCSV
     def getDFSkill(self):
         uidL, agNightL, mrNightL, ctNightL, fDayL, nightL, dayL = \
             [], [], [], [], [], [], []
@@ -281,7 +281,7 @@ class DataSender(DataReader):
                         df.at[uid, strday] = job
         return df
 
-    @Debugger.toCSV
+    # @Debugger.toCSV
     def getDFKinmuFull(self):
         previous = self.getDFPreviousOnly()
         now_next = self.getDFKinmuOnly()
@@ -289,7 +289,7 @@ class DataSender(DataReader):
         self.kinmu_full = pd.concat([previous, now_next], axis=1)
         return self.kinmu_full 
 
-    @Debugger.toCSV   
+    # @Debugger.toCSV   
     def getDFRenzoku(self):
         try:
             if df == None:
@@ -324,7 +324,7 @@ class DataSender(DataReader):
         #             renzokuDF.at[uid, i - self.rk] = 1                    
         return df 
 
-    @Debugger.toCSV
+    # @Debugger.toCSV
     def getDFShift(self):
         uidL, dateL, jobL = [], [], []
 
@@ -343,15 +343,62 @@ class DataSender(DataReader):
         data = []
         for uid, person in self.members.items():
             for date in self.now_next_month:
-                if (    date not in person.requestPerDay.keys() 
+                if (date not in person.requestPerDay.keys() 
                     and (person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)
                     and uid < 900):
-                    job = ConvertTable.convertTable[person.jobPerDay[date]]
+                    # job = ConvertTable.convertTable[person.jobPerDay[date]]
+                    if date in person.requestPerDay.keys():
+                        job = ConvertTable.convertTable[person.requestPerDay[date]]
+                    else:
+                        job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
                     
                     data.append(line) 
 
         return data
+
+    def send2accdb(self):
+        database_path = readSettingJson('DATABASE_PATH')
+        # [uid, workdate, shift]
+        records = self.getAccessData()
+
+        conn_str = (
+            r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
+            f'DBQ={database_path};'
+            r'PWD=0000;'
+        )
+        conn = pyodbc.connect(conn_str, autocommit=True)
+        cursor = conn.cursor()
+        for record in records:
+            uid = record[0]
+            workdate = record[1]
+            job = record[2]
+            updating = datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S')
+            operator = "admin"
+            # print(f'{uid}__{workdate}__{job}__{updating}__{operator}')
+            sql = (
+                f"SELECT count(*) "
+                f"FROM tblShift "
+                f"WHERE uid = {uid} AND workdate =#{workdate}#"
+                )
+            cursor.execute(sql)
+
+            if cursor.fetchone()[0] > 0:
+                sql = (
+                    f"UPDATE tblShift "
+                    f"SET shift = '{job}', updating = #{updating}#, operator = '{operator}' "
+                    f"WHERE uid = {uid} AND workdate = #{workdate}#"
+                )
+            else:
+                sql = (
+                    f"INSERT INTO tblShift "
+                    f"(uid, workdate, shift, updating, operator) "
+                    f"VALUES({uid}, #{workdate}#, '{job}', #{updating}#, '{operator}')"
+                )
+            cursor.execute(sql)
+
+        cursor.close()
+        print("OK")
    #dfrenzoku
     #dfskill
     #dfkinmuhyou_long
