@@ -4,6 +4,7 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import *
 from util.shiftController import ShiftChannel
+from util.dataSender import DataName
 # from integral.src.util.shiftController import ShiftChannel
 
 
@@ -104,8 +105,7 @@ class nightshiftDialog(QtWidgets.QDialog):
 
         # ダブルクリックしたデータの文字が全て英字かどうか判定する　⇒　ダミーか判定する
         if item.data().isalpha() is False:
-            # self.configdialog = candidate()
-            # self.configdialog.show()
+
             self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
             # self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
             # self.candidate.show()
@@ -124,17 +124,27 @@ class CandidateWidget(QtWidgets.QWidget):
         super().__init__(parent)
         
 
-        # self.nightshiftModel = nightModel
-        # self.nightshiftModelIndex = nightIndex
+        self.nightshiftModel = nightModel
+        self.nightshiftModelIndex = nightIndex
 
-        # self.targetRow = nightIndex.row() + int(self.rk)
-        # self.targetColumn = nightIndex.column()
-        # self.targetData = nightIndex.data()
 
+        self.rk = shiftChannel.shiftCtrl.rk
         self.dfskill =  shiftChannel.shiftCtrl.getDFSkill()
         self.DFrenzoku =  shiftChannel.shiftCtrl.getDFRenzoku()
-        
-        print(self.DFrenzoku)
+        self.DFshift = shiftChannel.shiftCtrl.getDFShift()
+        self.DFkinmuhyou =  shiftChannel.shiftCtrl.getDFKinmuOnly()
+        self.DFkinmuhyou_long =  shiftChannel.shiftCtrl.getDFKinmuFull()
+        self.DFstaff = shiftChannel.shiftCtrl.getDFstaff()
+        self.DFNrdeptcore = shiftChannel.shiftCtrl.getNrdeptcore(DataName.DFNrdept)
+        self.RawDFNrdeptcore = shiftChannel.shiftCtrl.getNrdeptcore(DataName.RawDFNrdeptcore)
+        # コアメンバーは辞書型で取得する
+        self.DictCore = shiftChannel.shiftCtrl.getNrdeptcore(DataName.DFCore)
+
+        self.targetRow = nightIndex.row() + int(self.rk)
+        self.targetColumn = nightIndex.column()
+        self.targetData = nightIndex.data()
+
+  
         # self.data = self.createCandidate()
         # self.model =Model(self.data)
         # self.view = QTableView()

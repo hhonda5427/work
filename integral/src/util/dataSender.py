@@ -14,7 +14,7 @@ class DataName(Enum):
     kinmu = auto()
     request = auto()
     previous = auto()
-    DFNrdeptcore = auto()
+    DFNrdept = auto()
     RawDFNrdeptcore = auto()
     DFCore = auto()
 
@@ -180,6 +180,7 @@ class DataSender(DataReader):
     def getDf4Iwasaki(self):
         pass
 
+    @Debugger.toCSV   
     def getDFstaff(self):
         uidL, staffidL, nameL = [], [], []
         for uid, person in self.members.items():
@@ -189,12 +190,15 @@ class DataSender(DataReader):
         unsorted = pd.DataFrame({'No':uidL, 'ID':staffidL, 'Name':nameL})
         return unsorted.sort_values(by=['No'], ascending=[True])
 
+    # @Debugger.toCSV
     def getNrdeptcore(self, dataName: DataName):
         uidL, deptL, rtL, mrL, tvL, ksL, nmL, xpL, ctL, xoL, agL, mgL, mtL=\
-            [], [], [], [], [],[], [], [], [], [], [], [], [], []  
+            [], [], [], [], [], [], [], [], [], [], [], [], []  
 
 
         for uid, person in self.members.items():
+            if uid >= 900:
+                continue            
             uidL.append(uid)
             deptL.append(person.dept)
             rtL.append(person.modalityN[0])
@@ -208,29 +212,33 @@ class DataSender(DataReader):
             agL.append(person.modalityN[8])
             mgL.append(person.modalityN[9])
             mtL.append(person.modalityN[10])
-
-        baseDF = pd.DataFrame({'UID':uidL, 'Mo':deptL, \
+        d = {'Mo':deptL, \
             'RT':rtL, 'MR':mrL, 'TV':tvL, 'KS':ksL, 'NM':nmL ,\
-            'XP':xpL, 'CT':ctL, 'XO':xoL, 'AG':agL, 'MG':mgL, 'MT':mtL})    
+            'XP':xpL, 'CT':ctL, 'XO':xoL, 'AG':agL, 'MG':mgL, 'MT':mtL}
+        baseDF = pd.DataFrame(data=d, index=uidL)
+        # pd.DataFrame({'UID':uidL, 'Mo':deptL, \
+        #     'RT':rtL, 'MR':mrL, 'TV':tvL, 'KS':ksL, 'NM':nmL ,\
+        #     'XP':xpL, 'CT':ctL, 'XO':xoL, 'AG':agL, 'MG':mgL, 'MT':mtL})    
         
-        if dataName == DataName.DFNrdeptcore:
-            return baseDF['UID':'Mo']
+        if dataName == DataName.DFNrdept:
+            return baseDF['Mo']
         elif dataName == DataName.RawDFNrdeptcore:
             return baseDF
         elif dataName == DataName.DFCore:
             coreDict = {}
-            coreDict['DFRTCore'] = baseDF.query('RT==6')
-            coreDict['DFMRCore'] = baseDF.query('MR==6')
-            coreDict['DFTVCore'] = baseDF.query('TV==6')
-            coreDict['DFKSCore'] = baseDF.query('KS==6')
-            coreDict['DFNMCore'] = baseDF.query('NM==6')
-            coreDict['DFXPCore'] = baseDF.query('XP==6')
-            coreDict['DFCTCore'] = baseDF.query('CT==6')
-            coreDict['DFXOCore'] = baseDF.query('XO==6')
-            coreDict['DFAGCore'] = baseDF.query('AG==6')
-            coreDict['DFMGCore'] = baseDF.query('MG==6')
-            coreDict['DFMTCore'] = baseDF.query('MT==6')
-            return coreDict 
+            coreDict['DFRTCore'] = baseDF.query('Mo=="RT" & RT=="6"').index.values.tolist()
+            coreDict['DFMRCore'] = baseDF.query('Mo=="MR" & MR=="6"').index.values.tolist()
+            coreDict['DFTVCore'] = baseDF.query('Mo=="TV" & TV=="6"').index.values.tolist()
+            coreDict['DFKSCore'] = baseDF.query('Mo=="KS" & KS=="6"').index.values.tolist()
+            coreDict['DFNMCore'] = baseDF.query('Mo=="NM" & NM=="6"').index.values.tolist()
+            coreDict['DFXPCore'] = baseDF.query('Mo=="XP" & XP=="6"').index.values.tolist()
+            coreDict['DFCTCore'] = baseDF.query('Mo=="CT" & CT=="6"').index.values.tolist()
+            coreDict['DFXOCore'] = baseDF.query('Mo=="XO" & XO=="6"').index.values.tolist()
+            coreDict['DFAGCore'] = baseDF.query('Mo=="AG" & AG=="6"').index.values.tolist()
+            coreDict['DFMGCore'] = baseDF.query('Mo=="MG" & MG=="6"').index.values.tolist()
+            coreDict['DFMTCore'] = baseDF.query('Mo=="MT" & MT=="6"').index.values.tolist()
+            
+            return coreDict
         else:
             pass
 
@@ -240,21 +248,20 @@ class DataSender(DataReader):
             [], [], [], [], [], [], []
         for uid, person in self.members.items():
 
-            if uid < 900:
-
-                uidL.append(uid)
-                agNightL.append(person.skill[0])
-                mrNightL.append(person.skill[1])
-                ctNightL.append(person.skill[2])
-                fDayL.append(person.skill[3])
-                nightL.append(person.skill[4])
-                dayL.append(person.skill[5])
+            if uid >= 900:
+                continue
+            uidL.append(uid)
+            agNightL.append(person.skill[0])
+            mrNightL.append(person.skill[1])
+            ctNightL.append(person.skill[2])
+            fDayL.append(person.skill[3])
+            nightL.append(person.skill[4])
+            dayL.append(person.skill[5])
 
         d = {'A夜':agNightL, 'M夜':mrNightL, 'C夜':ctNightL, 'F':fDayL, '夜勤':nightL, '日勤':dayL}
         return pd.DataFrame(data=d, index=uidL)
 
     @ConvertTable.id2Name
-
     def getDFKinmuOnly(self):
         df = pd.DataFrame(None, columns=self.toHeader_now_next(), index=self.members.keys())
         for uid, person in self.members.items():
@@ -264,7 +271,7 @@ class DataSender(DataReader):
                         df.at[uid, strday] = job
         return df
  
-    # @ConvertTable.id2Name
+    @ConvertTable.id2Name
     def getDFPreviousOnly(self):
         df = pd.DataFrame(None, columns=self.toHeader_previous(), index=self.members.keys())
         for uid, person in self.members.items():
@@ -281,7 +288,8 @@ class DataSender(DataReader):
 
         self.kinmu_full = pd.concat([previous, now_next], axis=1)
         return self.kinmu_full 
-        
+
+    @Debugger.toCSV   
     def getDFRenzoku(self):
         try:
             if df == None:
@@ -293,11 +301,11 @@ class DataSender(DataReader):
             df = self.getDFKinmuFull()
         except AttributeError as ex:
             df = self.getDFKinmuFull()
-        offList = ['10', '11', '50', '60', '61', '62', '63']
-        workList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', \
-                    '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', \
-                    '31', '32', '33', '34', '40', '41','62', '12']
-        df.replace(['10', '11', '50', '60', '61', '62', '63'], None, inplace=True)
+        offList = ['休', '夏', '振', '特', '年', '暇']
+        workList = ['A日', 'M日', 'C日', 'F日', 'A夜', 'M夜', 'C夜', '明', '勤', '張', \
+                    'MR', 'TV', 'KS', 'NM', 'AG', 'RT', 'XP', 'CT', 'XO', 'FR', 'NF', \
+                    'MG', 'MT', 'AS', 'ET', '援', '他','半', 'ダ']
+        df.replace(offList, None, inplace=True)
         df.replace(workList, '1', inplace=True)
 
 
@@ -316,7 +324,7 @@ class DataSender(DataReader):
         #             renzokuDF.at[uid, i - self.rk] = 1                    
         return df 
 
-
+    @Debugger.toCSV
     def getDFShift(self):
         uidL, dateL, jobL = [], [], []
 
@@ -326,7 +334,9 @@ class DataSender(DataReader):
                     uidL.append(uid)
                     dateL.append(int(day[2])-1)
                     jobL.append(job)
-        return pd.DataFrame({'UID': uidL, 'Date': dateL, 'Job':jobL}) 
+        d = {'Date': dateL, 'Job':jobL}
+        return pd.DataFrame(data=d, index=uidL)
+    #    return pd.DataFrame({'UID': uidL, 'Date': dateL, 'Job':jobL}) 
 
     
     def getAccessData(self):
