@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemVie
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
-from util.kinnmuCount import count_func_con
+from util.kinnmuCount import count_func_con, mwork_func
 from util.kinnmuCount import countfunc_col
 
 ROWHEIGHT = 30
@@ -99,9 +99,6 @@ class ShiftTableWidget(QWidget):
     
         #結果格納リスト
 
-        
-        
-
         #行列の長さの取得
         
         columss=len(data.index)
@@ -113,57 +110,61 @@ class ShiftTableWidget(QWidget):
         #連続勤務計算
         #print(data2)
 
-        cwork=0#加算用変数
-       
-        
-        
-        l=[]#格納リスト
+        # cwork=0#加算用変数
+        # l=[]#格納リスト
+
+        self.init_count_func_con(data, iota, columss, colum2, tail, data2)
+
+    def init_count_func_con(self, data, iota, columss, colum2, tail, data2):
         for z in range(columss):
-            l.clear()
+            # l.clear()
             data4 = data.iloc[z,iota:tail]
             kyu=(data4=='休').sum()
-            for i in range(tail):
+
+            mwork = mwork_func(data=data2, row=z, columss=tail)
+            
+            # for i in range(tail):
                     
-                        zzz=data2.iloc[z,i]
+            #             zzz=data2.iloc[z,i]
                         
-                        if zzz=='休':
-                            l.append(cwork)
-                            cwork=0
-                        elif zzz=='暇':
-                            l.append(cwork)
-                            cwork=0
-                        elif zzz=='夏':
-                            l.append(cwork)
-                            cwork=0
-                        elif zzz=='特':
-                            l.append(cwork)
-                            cwork=0
-                        else :
-                            cwork+=1
-            if i==colum2-1:
-                l.append(cwork)
-                cwork=0
+            #             if zzz=='休':
+            #                 l.append(cwork)
+            #                 cwork=0
+            #             elif zzz=='暇':
+            #                 l.append(cwork)
+            #                 cwork=0
+            #             elif zzz=='夏':
+            #                 l.append(cwork)
+            #                 cwork=0
+            #             elif zzz=='特':
+            #                 l.append(cwork)
+            #                 cwork=0
+            #             else :
+            #                 cwork+=1
+            # if i==colum2-1:
+            #     l.append(cwork)
+            #     cwork=0
+
 
                      #リストlに値が存在する場合
-            if l:
-                mwork=max(l)
-                index = self.countView.model().index(z, 0,QModelIndex())
-                index2 = self.countView.model().index(z, 1,QModelIndex())
-                self.countView.model().setData(index2, kyu, Qt.EditRole)         
-                self.countView.model().setData(index, mwork, Qt.EditRole)
-                #print(mwork)
-                del l[:]
-                
-            else:               #リストlに値がない場合
-                mwork=0
-                index = self.countView.model().index(z, 0,QModelIndex())
-                index2 = self.countView.model().index(z, 1,QModelIndex())
-                self.countView.model().setData(index2, kyu, Qt.EditRole)         
-                self.countView.model().setData(index, mwork, Qt.EditRole)
-                #print('none')
-                del l[:]
+            # if l:
+            # mwork=max(l)
+            index = self.countView.model().index(z, 0,QModelIndex())
+            index2 = self.countView.model().index(z, 1,QModelIndex())
+            self.countView.model().setData(index2, kyu, Qt.EditRole)         
+            self.countView.model().setData(index, mwork, Qt.EditRole)
+            #print(mwork)
+            # del l[:]
+            
+            # else:               #リストlに値がない場合
+            #     mwork=0
+            #     index = self.countView.model().index(z, 0,QModelIndex())
+            #     index2 = self.countView.model().index(z, 1,QModelIndex())
+            #     self.countView.model().setData(index2, kyu, Qt.EditRole)         
+            #     self.countView.model().setData(index, mwork, Qt.EditRole)
+            #     #print('none')
+            #     del l[:]
         for i in range(colum2):
-
             data5=data.iloc[:,i]
             data6=data5.T
             kyu2=(data6=='休').sum()
@@ -172,6 +173,7 @@ class ShiftTableWidget(QWidget):
             self.columnHeaderView.model().setData(index3,kyu2,Qt.EditRole)
     
         #data2.to_csv("kinmucount.csv",encoding="Shift-JIS")
+    
     
                
                     

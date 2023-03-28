@@ -1,3 +1,4 @@
+
 def count_func_con(data,row,iota):
     #・・・連続勤務日数の計算・・・
     
@@ -13,13 +14,33 @@ def count_func_con(data,row,iota):
     
     
 
+    mwork = mwork_func(data, row, columss)
+    
+    print(mwork)
+    data4 = data.iloc[row,iota:tail]#今月分データ
+    kin=(data4=='勤').sum()
+    kyu=(data4=='休').sum()
+    ka=(data4=='暇').sum()
+    ake=(data4=='明').sum()
+    fni=(data4=='F日').sum()
+    cni=(data4=='C日').sum()
+    ani=(data4=='A日').sum()
+    mni=(data4=='M日').sum()
+    cya=(data4=='C夜').sum()
+    aya=(data4=='A夜').sum()
+    mya=(data4=='M夜').sum()
+    kin2=(data4==None).sum()
+    #各項目の計算
+    hd=kyu
+    hd_2=ka
+    return mwork, hd
+
+def mwork_func(data, row, columss, isConstruct = False):
     cwork=0#加算用変数
 
     l=[]#格納リスト
 
-    
     for i in range(columss):
-                
         zzz=data.iloc[row,i]
         
         if zzz=='休':
@@ -39,24 +60,8 @@ def count_func_con(data,row,iota):
     l.append(cwork)
     cwork=0
     mwork=max(l)
-    print(mwork)
-    data4 = data.iloc[row,iota:tail]#今月分データ
-    kin=(data4=='勤').sum()
-    kyu=(data4=='休').sum()
-    ka=(data4=='暇').sum()
-    ake=(data4=='明').sum()
-    fni=(data4=='F日').sum()
-    cni=(data4=='C日').sum()
-    ani=(data4=='A日').sum()
-    mni=(data4=='M日').sum()
-    cya=(data4=='C夜').sum()
-    aya=(data4=='A夜').sum()
-    mya=(data4=='M夜').sum()
-    kin2=(data4==None).sum()
-    #各項目の計算
-    hd=kyu
-    hd_2=ka
-    return mwork,hd
+
+    return mwork
 
 def countfunc_col(data,colmun):
     data6 = data.iloc[:,colmun]
