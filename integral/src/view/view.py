@@ -9,7 +9,9 @@ from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemVie
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
-        
+from util.kinnmuCount import count_func_con
+from util.kinnmuCount import countfunc_col
+
 ROWHEIGHT = 30
 COLUMNWIDTH = 20
 
@@ -87,7 +89,94 @@ class ShiftTableWidget(QWidget):
         self.setLayout(layout)
         self.setContentsMargins(5, 0, 0, 0)
         self.setMinimumSize(1000, 400)
+        
+        data=self.shiftView.model()._data
+        
+        iota =  int(*shiftModel.shiftCtrlChannel.shiftCtrl.config['iota'])
+        
+       
+        #・・・連続勤務日数の計算・・・
+    
+        #結果格納リスト
 
+        
+        
+
+        #行列の長さの取得
+        
+        columss=len(data.index)
+        colum2=len(data.columns)
+        tail=colum2-1#変更された行の今月分のみ取得#今月分データ
+        data2=data.iloc[:,:tail]
+        
+        
+        #連続勤務計算
+        #print(data2)
+
+        cwork=0#加算用変数
+       
+        
+        
+        l=[]#格納リスト
+        for z in range(columss):
+            l.clear()
+            data4 = data.iloc[z,iota:tail]
+            kyu=(data4=='休').sum()
+            for i in range(tail):
+                    
+                        zzz=data2.iloc[z,i]
+                        
+                        if zzz=='休':
+                            l.append(cwork)
+                            cwork=0
+                        elif zzz=='暇':
+                            l.append(cwork)
+                            cwork=0
+                        elif zzz=='夏':
+                            l.append(cwork)
+                            cwork=0
+                        elif zzz=='特':
+                            l.append(cwork)
+                            cwork=0
+                        else :
+                            cwork+=1
+            if i==colum2-1:
+                l.append(cwork)
+                cwork=0
+
+                     #リストlに値が存在する場合
+            if l:
+                mwork=max(l)
+                index = self.countView.model().index(z, 0,QModelIndex())
+                index2 = self.countView.model().index(z, 1,QModelIndex())
+                self.countView.model().setData(index2, kyu, Qt.EditRole)         
+                self.countView.model().setData(index, mwork, Qt.EditRole)
+                #print(mwork)
+                del l[:]
+                
+            else:               #リストlに値がない場合
+                mwork=0
+                index = self.countView.model().index(z, 0,QModelIndex())
+                index2 = self.countView.model().index(z, 1,QModelIndex())
+                self.countView.model().setData(index2, kyu, Qt.EditRole)         
+                self.countView.model().setData(index, mwork, Qt.EditRole)
+                #print('none')
+                del l[:]
+        for i in range(colum2):
+
+            data5=data.iloc[:,i]
+            data6=data5.T
+            kyu2=(data6=='休').sum()
+            #print(data6)
+            index3 = self.columnHeaderView.model().index(0,i,QModelIndex())
+            self.columnHeaderView.model().setData(index3,kyu2,Qt.EditRole)
+    
+        #data2.to_csv("kinmucount.csv",encoding="Shift-JIS")
+    
+               
+                    
+                    
+                    
     def setColumnWidth(self):
         staffwidth = [30, 80, 100, 30]
         ncol = self.shiftModel.columnCount()
@@ -173,12 +262,31 @@ class ShiftTableWidget(QWidget):
 
         row = index.row()
         column = index.column()
-        data = self.shiftView.model()._data.iat[index.row(), index.column()]
+        data = self.shiftView.model()._data.iloc[index.row(), :]
         uid = self.shiftView.model().headerData(row, Qt.Vertical, Qt.DisplayRole)
         date = self.shiftView.model().headerData(column, Qt.Horizontal, Qt.DisplayRole)
-
-        print(f'{row}___{column}__{data}__{uid}___{date}')
         
+        shiftModel : ShiftModel = self.shiftView.model()
+        #連続勤務日数　基準日より何日前か
+        #*がわからない場合はリストのアンパッキングで検索してください
+        iota =  int(*shiftModel.shiftCtrlChannel.shiftCtrl.config['iota'])
+
+        data = self.shiftView.model()._data#全体データフレーム
+        print(f'{row}___{column}__{data}__{uid}___{date}')
+        print(row)
+        print(column)
+        #rowa=int(row)
+        conwork = count_func_con(data,row,iota)
+        conworkcol=countfunc_col(data,column)
+        index = self.countView.model().index(index.row(), 0,QModelIndex())
+        index2 = self.countView.model().index(index.row(), 1,QModelIndex())
+        index3 = self.columnHeaderView.model().index(0,column,QModelIndex())
+        self.countView.model().setData(index, conwork[0], Qt.EditRole)
+        self.countView.model().setData(index2, conwork[1], Qt.EditRole)
+        self.columnHeaderView.model().setData(index3,conworkcol,Qt.EditRole)
+        self.countView.viewport().update()
+        self.columnHeaderView.viewport().update()
+
 class BaseView(QTableView):
 
     def __init__(self, parent=None, *args):
@@ -330,7 +438,10 @@ class ColumnHeaderModel(TableModel):
                 self._font[index.column()] = value
                 self.dataChanged.emit(index, index)
                 return True
+            elif role == Qt.ItemDataRole.EditRole:
+                self._data.iat[index.row(), index.column()] = value
             else:
+
                 return False
         else:
             return False
