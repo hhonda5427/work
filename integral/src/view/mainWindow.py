@@ -94,6 +94,7 @@ class MainWindow(QMainWindow):
         
         self.shiftView.close()
         self.yakinView.close()
+        self.yakinView.candidate.close()
         return super().closeEvent(a0)
 
 
