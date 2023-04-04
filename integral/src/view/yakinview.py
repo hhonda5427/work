@@ -31,14 +31,35 @@ class Model(QtCore.QAbstractTableModel):
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
         self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
 
+        RequestYakinDF = self.shiftChannel.shiftCtrl.requestdat2DF()
+        emptyDF = pd.DataFrame(np.full(self._dataframe.shape, ''))
+        RequestYakinDF = RequestYakinDF.astype('uint8')
+        RequestYakinDF = RequestYakinDF[RequestYakinDF.iloc[:, 2] <= 6]
+
+        for i in range(len(RequestYakinDF)):
+                d = RequestYakinDF.iloc[i, 1]
+                job = RequestYakinDF.iloc[i, 2]
+                u = RequestYakinDF.iloc[i, 0]
+                if emptyDF.iat[d, job] is '':
+                    emptyDF.iat[d, job] = u
+                else:
+                    emptyDF.iat[d, 7] = u
+
+        requestDF = emptyDF.reindex(columns=[4, 5, 6, 0, 1, 2, 3, 7])
+
+        # print(self.shiftChannel.shiftCtrl.getRequestYakinForm())
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
         for i in range(len(self._dataframe)):
-            for j in range(4):
+            for j in range(8):
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
                     self._colorPlace.iloc[i, j] = QColor('#EBFF00')
+                if requestDF.iloc[i, j] != '':
+                    self._colorPlace.iloc[i, j] = QColor('#DCDCDC')
+
+
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -62,9 +83,11 @@ class Model(QtCore.QAbstractTableModel):
         return len(self._dataframe.columns)
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: QtCore.Qt.ItemDataRole):
+        JobList = ['A夜勤', 'M夜勤', 'C夜勤', 'A日勤', 'M日勤', 'C日勤', 'F日勤', 'F日勤']
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
-                return str(self._dataframe.columns[section])
+                return JobList[section]
+                # return str(self._dataframe.columns[section])
 
             if orientation == QtCore.Qt.Vertical:
                 return str(self._dataframe.index[section])
@@ -84,8 +107,9 @@ class Model(QtCore.QAbstractTableModel):
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
-        # 'A夜勤', 5: 'M夜勤', 6: 'C夜勤', 0: 'A日勤', 1: 'M日勤', 2: 'C日勤', 3: 'F日勤', -3: 'F日勤'
+        # 4:'A夜勤', 5: 'M夜勤', 6: 'C夜勤', 0: 'A日勤', 1: 'M日勤', 2: 'C日勤', 3: 'F日勤', -3: 'F日勤'
         jobList = ['4', '5', '6', '0', '1', '2', '3', '3']
+        #JobList = ['A夜勤', 'M夜勤', 'C夜勤', 'A日勤', 'M日勤', 'C日勤', 'F日勤', 'F日勤']
         newuid = self.uidDict[str(self._dataframe.iat[index.row(), index.column()])]
         olduid = self.uidDict[str(self.undoframe.iat[index.row(), index.column()])]
         strdate = self.headerData(index.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
@@ -132,6 +156,7 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.setLayout(layout)
 
     def dclickevent(self, item):
+        # print(self.shiftChannel.shiftCtrl.getRequestYakinForm())
         # self.dCWexist:
         # print('すでにダブルクリック後のウィンドウが開いています。')
         # return
@@ -159,6 +184,13 @@ nightIndex = nightshiftdialogで使用しているモデルのインデックス
 '''
 
 #LOGPATH = pathlib.Path("C://Users//pelu0//PycharmProjects//ShiftManagerGitHub//work//integral//log")
+
+# def findRequest(shiftChannel: ShiftChannel):
+#     for uid, person in shiftChannel.shiftCtrl.members.items():
+#         for day, job in person.requestPerDay.items():
+
+
+
 
 
 class CandidateWidget(QtWidgets.QWidget):
@@ -231,9 +263,9 @@ class CandidateWidget(QtWidgets.QWidget):
     '''
     候補者レコード = '氏名','休日','連続勤務回数','夜勤回数','日直回数' を出力
     '''
-
     # 空白のみ候補者
     def createDF(self):
+
         for i in range(len(self._data)):
             for j in range(len(self._data.columns)):
                 value = self._kinmu.iat[i, j]

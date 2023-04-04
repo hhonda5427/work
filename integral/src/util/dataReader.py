@@ -7,7 +7,7 @@ import os
 import pathlib
 from uuid import uuid4
 
-
+import pandas as pd
 from database.member import *
 from decorator.convertTable import ConvertTable
 from decorator.validate import *
@@ -131,6 +131,10 @@ class DataReader(Members):
         self.dat2Member(DatNames.request, self.now_next_month)
         return self
 
+    def requestdat2DF(self):
+        return pd.read_csv(os.path.join(self.rootPath, DatNames.request.value), header=None)
+
+
     def dat2Member(self, readDatName: DatNames, month_calendar: list[tuple[int, int, int, int]], datPath=''):
         try:
             readingDat = open(datPath, 'r', encoding='utf-8-sig')
@@ -145,6 +149,7 @@ class DataReader(Members):
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
                 # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
+
 
                 if not date in self.day_previous_next:
                     raise damagedDataError
@@ -334,3 +339,5 @@ class JapanHoliday():
             week_num = divmod_[0] + 1
         
         return week_num
+
+

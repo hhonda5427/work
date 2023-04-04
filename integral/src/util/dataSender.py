@@ -80,6 +80,21 @@ class DataSender(DataReader):
         # print(df.loc[:"2023-04-05", [1, 2]])
         return df.where(df.notna(),'')
 
+    def getRequestYakinForm(self) -> pd.DataFrame:
+        # df.at[strday, int(job)] is not None
+        # math.isnan(df.at[strday, int(job)])
+        df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
+        for person in self.members.values():
+            for strday, job in zip(self.toHeader_nowMonth(), person.requestPerDay.values()):
+                if job  in ["4", "5", "6", "0", "1", "2", "3"]:
+                    if type(df.at[strday, int(job)]) is str and job == "3":
+                        df.at[strday, -3] = person.name
+                    else:
+                        df.at[strday, int(job)] = person.name
+
+        # print(df.loc[:"2023-04-05", [1, 2]])
+
+        return df.where(df.notna(),'')
 
     @ConvertTable.id2Name
     def getKinmuForm(self, dataName: DataName) -> pd.DataFrame:
@@ -118,7 +133,6 @@ class DataSender(DataReader):
 
 
         elif dataName == DataName.request:
-            
             df = pd.DataFrame(None, columns=self.toHeader_fullspan(), index=self.members.keys())
             for uid, person in self.members.items():
                 for day, job in person.requestPerDay.items():
