@@ -30,6 +30,10 @@ class Model(QtCore.QAbstractTableModel):
         self.shiftChannel = shiftChannel
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
         self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
+        #文字色の設定がはいっているDataFrame
+        #初期状態の文字色は黒
+        self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
+        self._lastClickIndex = None
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
@@ -51,6 +55,8 @@ class Model(QtCore.QAbstractTableModel):
         # 色付けのコード追記
         if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
             return self._colorPlace.iloc[index.row(), index.column()]
+        if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            return self._wordColor.iloc[index.row(), index.column()]
         # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
         # if (index.row(), index.column()) in self.DummyPlace:
         # return QtGui.QColor('#EBFF00')
@@ -108,6 +114,22 @@ class Model(QtCore.QAbstractTableModel):
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
 
+    #clickしたときのindexを取得し、そのindexに対応したDataFrameの場所に文字色などの設定を入れる
+    def refreshWordColor(self, index):
+        #ほかの場所をクリックしたときに、前回クリックした場所の文字色を黒に戻す
+        if self._lastClickIndex != None:
+            self._wordColor.iloc[self._lastClickIndex.row(), self._lastClickIndex.column()] = QColor('#000000')
+
+        #クリックされた場所の値と同じ値がある場所の文字色をオレンジにする
+        #pandas Dataframe のself._dataframeをすべて見ていく 
+        for col_name, col_data in self._dataframe.iteritems():
+            for row_name, row_data in col_data.iteritems():
+                #クリックされた場所の値と同じ値がある場所の文字色をオレンジにする
+                if self._dataframe.iat[index.row(), index.column()] == row_data:
+                    print(self._dataframe.at[row_name, col_name])
+                    self._wordColor.loc[row_name, col_name] = QColor('#FFA500')
+        self._lastClickIndex = index
+    #ここで処理をするのはやめたほうがいいっぽい
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
@@ -127,9 +149,20 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.view.doubleClicked.connect(self.dclickevent)
+        self.view.clicked.connect(self.clickevent)
+        
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
+        
+        
+    #選択されたとき、refreshWordColorを呼び出す
+    def clickevent(self, index):
+        self.model.refreshWordColor(index)
+
+    # #クリックしたとき、refreshWordColorを呼び出す
+    # def clickevent(self, index):
+    #     self.model.refreshWordColor(index)
 
     def dclickevent(self, item):
         # self.dCWexist:
