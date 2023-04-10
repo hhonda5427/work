@@ -33,7 +33,7 @@ class Model(QtCore.QAbstractTableModel):
         #文字色の設定がはいっているDataFrame
         #初期状態の文字色は黒
         self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
-        self._lastClickIndex = None
+        self.commonNamePlace = []
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
@@ -80,14 +80,26 @@ class Model(QtCore.QAbstractTableModel):
         return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
+        # もしroleがEditRoleで、valueが現在保持されているUNIQUE IDに含まれていたら実行
         if role == QtCore.Qt.EditRole and value in self.uidDict.keys():
+            # データフレームの値を変更する
             self._dataframe.iat[index.row(), index.column()] = value
+            # データベースの情報を更新する
             self.rewriteDatabase(index)
+            # dataChangedシグナルを発生させて表示の更新を要求する
+            self.dataChanged.emit(index, index)
+            return True
+        elif role == QtCore.Qt.ForegroundRole:
+            # 文字色の設定
+            self._wordColor.iloc[index.row(), index.column()] = value
+
+            # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
             return True
 
+        # 上記条件以外ならFalseを返す
         return False
-
+    
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
         # 'A夜勤', 5: 'M夜勤', 6: 'C夜勤', 0: 'A日勤', 1: 'M日勤', 2: 'C日勤', 3: 'F日勤', -3: 'F日勤'
@@ -114,22 +126,38 @@ class Model(QtCore.QAbstractTableModel):
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
 
-    #clickしたときのindexを取得し、そのindexに対応したDataFrameの場所に文字色などの設定を入れる
-    def refreshWordColor(self, index):
-        #ほかの場所をクリックしたときに、前回クリックした場所の文字色を黒に戻す
-        if self._lastClickIndex != None:
-            self._wordColor.iloc[self._lastClickIndex.row(), self._lastClickIndex.column()] = QColor('#000000')
+    #選択した場所と同じ値がある場所の文字色をオレンジにする
+    def selectData(self, selected, deselected):
+        # 選択されたとき
+        for index in selected.indexes():
+            #pandas Dataframe のself._dataframeをすべて見ていく 
+            for col_name, col_data in self._dataframe.iteritems():
+                for row_name, row_data in col_data.iteritems():
+                    #クリックされた場所の値と同じ値がある場所を探す
+                    if self._dataframe.iat[index.row(), index.column()] == row_data:
+                        #同じ値がある場所のindexを取得する
+                        #row_name, col_nameはpandas Dataframeのindexとcolumnの名前
+                        #indexはpandas Dataframeのindexとcolumnの名前からindexを取得する
+                        col_index = self._dataframe.columns.get_loc(col_name)
+                        row_index = self._dataframe.index.get_loc(row_name)
+                        index = self.index(row_index, col_index)
+                        #self.commonNamePlaceにindexを保管する
+                        #indexがすでに保管されている場合は保管しない
+                        if index not in self.commonNamePlace:
+                            self.commonNamePlace.append(index)
+            #self.commonNamePlaceに保管した場所すべてをsetDataで文字色をオレンジにする
+            for i in self.commonNamePlace:
+                print(f'selectionChange: {i.row()}, {i.column()}')
+                self.setData(i, QColor('#FFA500'), QtCore.Qt.ForegroundRole)
 
-        #クリックされた場所の値と同じ値がある場所の文字色をオレンジにする
-        #pandas Dataframe のself._dataframeをすべて見ていく 
-        for col_name, col_data in self._dataframe.iteritems():
-            for row_name, row_data in col_data.iteritems():
-                #クリックされた場所の値と同じ値がある場所の文字色をオレンジにする
-                if self._dataframe.iat[index.row(), index.column()] == row_data:
-                    print(self._dataframe.at[row_name, col_name])
-                    self._wordColor.loc[row_name, col_name] = QColor('#FFA500')
-        self._lastClickIndex = index
-    #ここで処理をするのはやめたほうがいいっぽい
+            
+        # 選択が外れたとき
+        for _index in deselected.indexes():
+            #保管しておいたリストにある場所の文字色を元に戻す
+            for i in self.commonNamePlace:
+                self.setData(i, QColor('#000000'), QtCore.Qt.ForegroundRole)
+            #リストを空にする
+            self.commonNamePlace = []
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
@@ -148,38 +176,25 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
-        self.view.clicked.connect(self.clickevent)
-        
+        # 選択モデルの取得
+        selectionModel = self.view.selectionModel() 
+        # 選択モデルとselectDataメソッドを接続
+        selectionModel.selectionChanged.connect(self.view.model().selectData)
+
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
         
         
-    #選択されたとき、refreshWordColorを呼び出す
-    def clickevent(self, index):
-        self.model.refreshWordColor(index)
-
-    # #クリックしたとき、refreshWordColorを呼び出す
-    # def clickevent(self, index):
-    #     self.model.refreshWordColor(index)
-
     def dclickevent(self, item):
-        # self.dCWexist:
-        # print('すでにダブルクリック後のウィンドウが開いています。')
-        # return
-        # if self.doubleClickObj:
-        #     print('called')
-        #     self.doubleClickObj.close()
-        # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
+
+    # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
         if (item.row(), item.column()) in self.model.DummyPlace:
             self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
             self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
             self.candidate.show()
-            # self.doubleClickObj = self.candidate
-
-        # ダブルクリックしたデータと共通するものの背景色を同じにする(なわ)
-        # self.model._dataframe.
 
     def fn_get_cell_Value(self, index):
         datas = index.data()
