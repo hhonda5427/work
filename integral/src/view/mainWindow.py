@@ -26,6 +26,7 @@ class MainWindow(QMainWindow):
 
         self.shiftModel.dataChanged.connect(self.refreshYakinTable)
         self.yakinModel.dataChanged.connect(self.refreshKinmuTable)
+        
 
 
         self.resize(1500, 800)
@@ -36,6 +37,10 @@ class MainWindow(QMainWindow):
                                                 self.countModel)
         
         self.yakinView = yakinview.nightshiftDialog(self.yakinModel, shiftChannel)
+        
+        selectionModel = self.yakinView.view.selectionModel()
+        selectionModel.selectionChanged.connect(self.refreshYakinAppearance)
+
 
         self.initUI()
 
@@ -85,16 +90,19 @@ class MainWindow(QMainWindow):
         self.yakinModel.refreshData()
         self.yakinView.view.viewport().update()
 
-    def refreshKinmuTable(self):
+    def refreshYakinAppearance(self, selected, deselected):
+        self.yakinModel.update_cell_color(selected, deselected)
+        self.yakinView.view.viewport().update()
 
+    def refreshKinmuTable(self):
         self.shiftModel.refreshData()
         self.shiftView.shiftView.viewport().update()
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         
         self.shiftView.close()
-        self.yakinView.close()
         self.yakinView.candidate.close()
+        self.yakinView.close()
         return super().closeEvent(a0)
 
 

@@ -30,6 +30,10 @@ class Model(QtCore.QAbstractTableModel):
         self.shiftChannel = shiftChannel
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
         self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
+        #文字色の設定がはいっているDataFrame
+        #初期状態の文字色は黒
+        self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
+        self.matching_cells = []
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
@@ -51,6 +55,8 @@ class Model(QtCore.QAbstractTableModel):
         # 色付けのコード追記
         if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
             return self._colorPlace.iloc[index.row(), index.column()]
+        if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            return self._wordColor.iloc[index.row(), index.column()]
         # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
         # if (index.row(), index.column()) in self.DummyPlace:
         # return QtGui.QColor('#EBFF00')
@@ -74,14 +80,26 @@ class Model(QtCore.QAbstractTableModel):
         return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
+        # もしroleがEditRoleで、valueが現在保持されているUNIQUE IDに含まれていたら実行
         if role == QtCore.Qt.EditRole and value in self.uidDict.keys():
+            # データフレームの値を変更する
             self._dataframe.iat[index.row(), index.column()] = value
+            # データベースの情報を更新する
             self.rewriteDatabase(index)
+            # dataChangedシグナルを発生させて表示の更新を要求する
+            self.dataChanged.emit(index, index)
+            return True
+        elif role == QtCore.Qt.ForegroundRole:
+            # 文字色の設定
+            self._wordColor.iat[index.row(), index.column()] = value
+
+            # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
             return True
 
+        # 上記条件以外ならFalseを返す
         return False
-
+    
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
         # 'A夜勤', 5: 'M夜勤', 6: 'C夜勤', 0: 'A日勤', 1: 'M日勤', 2: 'C日勤', 3: 'F日勤', -3: 'F日勤'
@@ -107,7 +125,38 @@ class Model(QtCore.QAbstractTableModel):
 
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
+        
+    # 選択されたセルと同じ値を持つセルの文字色をオレンジに変更する関数
+    def update_cell_color(self, selected, deselected):
+    #!!!!!!!!!!!!!!以下のfor文は順番を変更しないでください!!!!!!!!!!!!!!
+        # 選択が外れたとき
+        for _index in deselected.indexes():
+            self.set_cell_color(QColor('#000000'))
+            self.matching_cells = []
 
+        # 選択されたとき
+        for index in selected.indexes():
+            self.find_matching_cells(index)
+            self.set_cell_color(QColor('#FFA500'))
+
+
+    # 選択されたセルと同じ値を持つセルを探す関数
+    def find_matching_cells(self, selected_index):
+        selected_value = self._dataframe.iat[selected_index.row(), selected_index.column()]
+        for col_name, col_data in self._dataframe.iteritems():
+            for row_name, row_data in col_data.iteritems():
+                if selected_value == row_data:
+                    col_index = self._dataframe.columns.get_loc(col_name)
+                    row_index = self._dataframe.index.get_loc(row_name)
+                    index = self.index(row_index, col_index)
+                    if index not in self.matching_cells:
+                        self.matching_cells.append(index)
+
+    # セルの文字色を変更する関数
+    def set_cell_color(self, color):
+        for i in self.matching_cells:
+            self.setData(i, color, QtCore.Qt.ForegroundRole)
+            print(f'selectionChange: {i.row()}, {i.column()}, {self._wordColor.iat[i.row(), i.column()].name()}')
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
@@ -126,27 +175,25 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
+        # # 選択モデルの取得
+        # selectionModel = self.view.selectionModel() 
+        # # 選択モデルとselectDataメソッドを接続
+        # selectionModel.selectionChanged.connect(self.view.model().selectData)
+
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
-
+        
+        
     def dclickevent(self, item):
-        # self.dCWexist:
-        # print('すでにダブルクリック後のウィンドウが開いています。')
-        # return
-        # if self.doubleClickObj:
-        #     print('called')
-        #     self.doubleClickObj.close()
-        # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
+
+    # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
         if (item.row(), item.column()) in self.model.DummyPlace:
             self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
             self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
             self.candidate.show()
-            # self.doubleClickObj = self.candidate
-
-        # ダブルクリックしたデータと共通するものの背景色を同じにする(なわ)
-        # self.model._dataframe.
 
     def fn_get_cell_Value(self, index):
         datas = index.data()
