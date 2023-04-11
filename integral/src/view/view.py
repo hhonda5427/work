@@ -9,8 +9,7 @@ from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemVie
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
-from util.kinnmuCount import count_func_con, mwork_func
-from util.kinnmuCount import countfunc_col
+from util.kinnmuCount import *
 
 ROWHEIGHT = 30
 COLUMNWIDTH = 20
@@ -121,8 +120,9 @@ class ShiftTableWidget(QWidget):
             data4 = data.iloc[z,iota:tail]
             kyu=(data4=='休').sum()
 
-            mwork = mwork_func(data=data2, row=z, columss=tail)
-            
+            #最大連続勤務日数の計算
+            mwork = count_consecutive_workdays(data2, z, tail) 
+
             # for i in range(tail):
                     
             #             zzz=data2.iloc[z,i]
@@ -278,7 +278,7 @@ class ShiftTableWidget(QWidget):
         print(row)
         print(column)
         #rowa=int(row)
-        conwork = count_func_con(data,row,iota)
+        conwork = count_this_row(data,row,iota, want_to_count=ShiftElement.HOLIDAY)
         conworkcol=countfunc_col(data,column)
         index = self.countView.model().index(index.row(), 0,QModelIndex())
         index2 = self.countView.model().index(index.row(), 1,QModelIndex())
@@ -466,6 +466,8 @@ class ShiftModel(TableModel):
         self.createDF()
         self.setBackgroundColors()
         self.setTextColors()
+        
+        self._data.to_csv('C:\\Users\\unawa\\Documents\\ProgramSpace\\shiftManager\\work\\integral\\log\\kinmudata.csv')
 
     def data(self, index: QModelIndex, role=Qt.ItemDataRole):
         if not index.isValid():

@@ -101,8 +101,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, a0: QCloseEvent) -> None:
         
         self.shiftView.close()
-        self.yakinView.close()
         self.yakinView.candidate.close()
+        self.yakinView.close()
         return super().closeEvent(a0)
 
 
