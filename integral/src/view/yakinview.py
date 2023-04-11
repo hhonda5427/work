@@ -33,7 +33,7 @@ class Model(QtCore.QAbstractTableModel):
         #文字色の設定がはいっているDataFrame
         #初期状態の文字色は黒
         self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
-        self.commonNamePlace = []
+        self.matching_cells = []
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
@@ -91,7 +91,7 @@ class Model(QtCore.QAbstractTableModel):
             return True
         elif role == QtCore.Qt.ForegroundRole:
             # 文字色の設定
-            self._wordColor.iloc[index.row(), index.column()] = value
+            self._wordColor.iat[index.row(), index.column()] = value
 
             # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
@@ -125,39 +125,38 @@ class Model(QtCore.QAbstractTableModel):
 
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
-
-    #選択した場所と同じ値がある場所の文字色をオレンジにする
-    def selectData(self, selected, deselected):
-        # 選択されたとき
-        for index in selected.indexes():
-            #pandas Dataframe のself._dataframeをすべて見ていく 
-            for col_name, col_data in self._dataframe.iteritems():
-                for row_name, row_data in col_data.iteritems():
-                    #クリックされた場所の値と同じ値がある場所を探す
-                    if self._dataframe.iat[index.row(), index.column()] == row_data:
-                        #同じ値がある場所のindexを取得する
-                        #row_name, col_nameはpandas Dataframeのindexとcolumnの名前
-                        #indexはpandas Dataframeのindexとcolumnの名前からindexを取得する
-                        col_index = self._dataframe.columns.get_loc(col_name)
-                        row_index = self._dataframe.index.get_loc(row_name)
-                        index = self.index(row_index, col_index)
-                        #self.commonNamePlaceにindexを保管する
-                        #indexがすでに保管されている場合は保管しない
-                        if index not in self.commonNamePlace:
-                            self.commonNamePlace.append(index)
-            #self.commonNamePlaceに保管した場所すべてをsetDataで文字色をオレンジにする
-            for i in self.commonNamePlace:
-                print(f'selectionChange: {i.row()}, {i.column()}')
-                self.setData(i, QColor('#FFA500'), QtCore.Qt.ForegroundRole)
-
-            
+        
+    # 選択されたセルと同じ値を持つセルの文字色をオレンジに変更する関数
+    def update_cell_color(self, selected, deselected):
+    #!!!!!!!!!!!!!!以下のfor文は順番を変更しないでください!!!!!!!!!!!!!!
         # 選択が外れたとき
         for _index in deselected.indexes():
-            #保管しておいたリストにある場所の文字色を元に戻す
-            for i in self.commonNamePlace:
-                self.setData(i, QColor('#000000'), QtCore.Qt.ForegroundRole)
-            #リストを空にする
-            self.commonNamePlace = []
+            self.set_cell_color(QColor('#000000'))
+            self.matching_cells = []
+
+        # 選択されたとき
+        for index in selected.indexes():
+            self.find_matching_cells(index)
+            self.set_cell_color(QColor('#FFA500'))
+
+
+    # 選択されたセルと同じ値を持つセルを探す関数
+    def find_matching_cells(self, selected_index):
+        selected_value = self._dataframe.iat[selected_index.row(), selected_index.column()]
+        for col_name, col_data in self._dataframe.iteritems():
+            for row_name, row_data in col_data.iteritems():
+                if selected_value == row_data:
+                    col_index = self._dataframe.columns.get_loc(col_name)
+                    row_index = self._dataframe.index.get_loc(row_name)
+                    index = self.index(row_index, col_index)
+                    if index not in self.matching_cells:
+                        self.matching_cells.append(index)
+
+    # セルの文字色を変更する関数
+    def set_cell_color(self, color):
+        for i in self.matching_cells:
+            self.setData(i, color, QtCore.Qt.ForegroundRole)
+            print(f'selectionChange: {i.row()}, {i.column()}, {self._wordColor.iat[i.row(), i.column()].name()}')
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
@@ -178,10 +177,10 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
-        # 選択モデルの取得
-        selectionModel = self.view.selectionModel() 
-        # 選択モデルとselectDataメソッドを接続
-        selectionModel.selectionChanged.connect(self.view.model().selectData)
+        # # 選択モデルの取得
+        # selectionModel = self.view.selectionModel() 
+        # # 選択モデルとselectDataメソッドを接続
+        # selectionModel.selectionChanged.connect(self.view.model().selectData)
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
