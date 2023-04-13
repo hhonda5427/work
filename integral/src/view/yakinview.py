@@ -29,20 +29,21 @@ class Model(QtCore.QAbstractTableModel):
         self.undoframe = self._dataframe.copy()
         self.shiftChannel = shiftChannel
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
-        self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
-        #文字色の設定がはいっているDataFrame
+        rows, cols = self._dataframe.shape
+        self._colorPlace = {col: {row: QColor('#00000000') for row in range(rows)} for col in range(cols)}
         #初期状態の文字色は黒
-        self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
+        self._wordColor =  {col: {row: QColor('#000000') for row in range(rows)} for col in range(cols)}
         self.matching_cells = []
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
-        for i in range(len(self._dataframe)):
-            for j in range(4):
+        for i in range(rows):
+            for j in range(cols):
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
-                    self._colorPlace.iloc[i, j] = QColor('#EBFF00')
+                    print(f'i: {i}, j: {j}')
+                    self._colorPlace[j][i] = QColor('#EBFF00')
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -54,9 +55,9 @@ class Model(QtCore.QAbstractTableModel):
             return str(self._dataframe.iloc[index.row(), index.column()])
         # 色付けのコード追記
         if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
-            return self._colorPlace.iloc[index.row(), index.column()]
+            return self._colorPlace[index.column()][index.row()]
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
-            return self._wordColor.iloc[index.row(), index.column()]
+            return self._wordColor[index.column()][index.row()]
         # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
         # if (index.row(), index.column()) in self.DummyPlace:
         # return QtGui.QColor('#EBFF00')
@@ -91,7 +92,7 @@ class Model(QtCore.QAbstractTableModel):
             return True
         elif role == QtCore.Qt.ForegroundRole:
             # 文字色の設定
-            self._wordColor.iat[index.row(), index.column()] = value
+            self._wordColor[index.column()][index.row()] = value
 
             # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
@@ -143,20 +144,23 @@ class Model(QtCore.QAbstractTableModel):
     # 選択されたセルと同じ値を持つセルを探す関数
     def find_matching_cells(self, selected_index):
         selected_value = self._dataframe.iat[selected_index.row(), selected_index.column()]
-        for col_name, col_data in self._dataframe.iteritems():
-            for row_name, row_data in col_data.iteritems():
-                if selected_value == row_data:
-                    col_index = self._dataframe.columns.get_loc(col_name)
-                    row_index = self._dataframe.index.get_loc(row_name)
-                    index = self.index(row_index, col_index)
-                    if index not in self.matching_cells:
-                        self.matching_cells.append(index)
+
+        # DataFrameの各要素が選択された値と一致するかどうかの真偽値の行列を取得
+        matching_mask = self._dataframe == selected_value
+
+        # 一致する要素のインデックスを取得
+        row_indices, col_indices = np.where(matching_mask)
+
+        # インデックスをリストに変換
+        index_list = [self.index(row, col) for row, col in zip(row_indices, col_indices)]
+
+        # 一致するインデックスを追加
+        self.matching_cells.extend([idx for idx in index_list if idx not in self.matching_cells])
 
     # セルの文字色を変更する関数
     def set_cell_color(self, color):
         for i in self.matching_cells:
             self.setData(i, color, QtCore.Qt.ForegroundRole)
-            print(f'selectionChange: {i.row()}, {i.column()}, {self._wordColor.iat[i.row(), i.column()].name()}')
 
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
