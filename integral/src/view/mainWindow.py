@@ -1,13 +1,13 @@
 
-import logging
-from Event.observer import Observer
+# import logging
+# from Event.observer import Observer
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from database.model4Kinmu import Model4Kinmu
-from database.model4Yakin import Model4Yakin
-from Event.memberSubject import memberUpdateGenerator
-from util.dataSender import DataSender, DataName
+# from database.model4Kinmu import Model4Kinmu
+# from database.model4Yakin import Model4Yakin
+# from Event.memberSubject import memberUpdateGenerator
+# from util.dataSender import DataSender, DataName
 from . import view, yakinview
 from util.shiftController import ShiftChannel
 from view.datamodel import *
@@ -119,12 +119,12 @@ class MainWindow(QMainWindow):
             pass
 
 
-class MemberElemObserver(Observer):
-    def __init__(self, kinmuModel: Model4Kinmu, yakinModel: Model4Yakin) -> None:
-        super().__init__()
-        self.kinmuModel = kinmuModel
-        self.yakinModel = yakinModel
+# class MemberElemObserver(Observer):
+#     def __init__(self, kinmuModel: Model4Kinmu, yakinModel: Model4Yakin) -> None:
+#         super().__init__()
+#         self.kinmuModel = kinmuModel
+#         self.yakinModel = yakinModel
 
-    def update(self, generator: memberUpdateGenerator):
-        self.kinmuModel.updateDF(generator.getKinmuDF())
-        self.yakinModel.updateDF(generator.getYakinDF())
+#     def update(self, generator: memberUpdateGenerator):
+#         self.kinmuModel.updateDF(generator.getKinmuDF())
+#         self.yakinModel.updateDF(generator.getYakinDF())

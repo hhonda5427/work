@@ -13,6 +13,7 @@ app = QApplication(sys.argv)
 shiftCtrl = ShiftController()
 shiftChannel = ShiftChannel(shiftCtrl)
 
+
 Window = MainWindow(shiftChannel)
 Window.show()
 

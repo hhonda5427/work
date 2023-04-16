@@ -1,7 +1,4 @@
-from PyQt5.QtCore import QModelIndex
-
 from Event.memberSubject import memberUpdateGenerator
-from util.dataReader import DataReader
 from util.dataSender import DataSender, DataName
 from decorator.convertTable import ConvertTable
 

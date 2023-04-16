@@ -1,7 +1,4 @@
-import inspect
-import os, sys
 import datetime
-import pathlib
 
 import numpy as np
 import pandas
@@ -25,25 +22,48 @@ class CandidateModel(TableModel):
 class Model(QtCore.QAbstractTableModel):
     def __init__(self, shiftChannel: ShiftChannel):
         super(Model, self).__init__()
-        self._dataframe: pandas.DataFrame = shiftChannel.shiftCtrl.getYakinForm()
-        self.undoframe = self._dataframe.copy()
         self.shiftChannel = shiftChannel
+        self._uidframe = shiftChannel.shiftCtrl.getYakinForm_uid()
+        self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
+        self.undoframe = self._dataframe.copy()
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
-        rows, cols = self._dataframe.shape
-        self._colorPlace = {col: {row: QColor('#00000000') for row in range(rows)} for col in range(cols)}
+        self.rows,self.cols = self._dataframe.shape
+        self._colorPlace = {col: {row: QColor('#00000000') for row in range(self.rows)} for col in range(self.cols)}
         #初期状態の文字色は黒
-        self._wordColor =  {col: {row: QColor('#000000') for row in range(rows)} for col in range(cols)}
+        self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+        # self._wordColorのshapeを確認
         self.matching_cells = []
+        
+        # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
+        self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
-        for i in range(rows):
-            for j in range(cols):
+        for i in range(self.rows):
+            for j in range(self.cols):
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
-                    print(f'i: {i}, j: {j}')
                     self._colorPlace[j][i] = QColor('#EBFF00')
+
+    def wordColorGen(self, uid):
+
+        #self._wordColorと同じshapeの空の辞書を作成
+        template =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+
+        # 引数のuidと一致する要素のインデックスをすべて取得
+        idx = np.where(self._uidframe.values == uid)
+
+        if len(idx[0]) > 0:
+            # idxにあるインデックスすべてに対して、templateの要素を変更
+            for i in range(len(idx[0])):
+                # templateの変更には、オレンジ色を設定
+                template[idx[1][i]][idx[0][i]] = QColor('#FFA500')
+            return template
+            
+        else:
+            return None
+        
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -57,6 +77,7 @@ class Model(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
             return self._colorPlace[index.column()][index.row()]
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            # indexにあるQColorのhex色を確認
             return self._wordColor[index.column()][index.row()]
         # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
         # if (index.row(), index.column()) in self.DummyPlace:
@@ -91,8 +112,14 @@ class Model(QtCore.QAbstractTableModel):
             self.dataChanged.emit(index, index)
             return True
         elif role == QtCore.Qt.ForegroundRole:
-            # 文字色の設定
-            self._wordColor[index.column()][index.row()] = value
+            #roleがForegroundRoleのとき、次の値が渡されてくる
+            # index = selectedindex or diselectedindex, value: boolean = isSelected
+
+            # value = Trueのとき、self._wordColorにindexに該当するwordColorDictの値を代入
+            if value:
+                uid = self._uidframe.iat[index.row(), index.column()]
+                self._wordColor = self.wordColorDict[uid] 
+            # value = Falseのとき、多分今は何もしなくていい
 
             # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
@@ -127,41 +154,17 @@ class Model(QtCore.QAbstractTableModel):
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
         
-    # 選択されたセルと同じ値を持つセルの文字色をオレンジに変更する関数
+
     def update_cell_color(self, selected, deselected):
-    #!!!!!!!!!!!!!!以下のfor文は順番を変更しないでください!!!!!!!!!!!!!!
-        # 選択が外れたとき
-        for _index in deselected.indexes():
-            self.set_cell_color(QColor('#000000'))
-            self.matching_cells = []
+        # 選択が外れたとき -> 何もしなくていい
+        # for _index in deselected.indexes():
 
         # 選択されたとき
         for index in selected.indexes():
-            self.find_matching_cells(index)
-            self.set_cell_color(QColor('#FFA500'))
-
-
-    # 選択されたセルと同じ値を持つセルを探す関数
-    def find_matching_cells(self, selected_index):
-        selected_value = self._dataframe.iat[selected_index.row(), selected_index.column()]
-
-        # DataFrameの各要素が選択された値と一致するかどうかの真偽値の行列を取得
-        matching_mask = self._dataframe == selected_value
-
-        # 一致する要素のインデックスを取得
-        row_indices, col_indices = np.where(matching_mask)
-
-        # インデックスをリストに変換
-        index_list = [self.index(row, col) for row, col in zip(row_indices, col_indices)]
-
-        # 一致するインデックスを追加
-        self.matching_cells.extend([idx for idx in index_list if idx not in self.matching_cells])
-
-    # セルの文字色を変更する関数
-    def set_cell_color(self, color):
-        for i in self.matching_cells:
-            self.setData(i, color, QtCore.Qt.ForegroundRole)
-
+            # ここで直接self._wordColorを書き換えても表示は変わらない
+            # setData関数を使う必要がある
+            # setDataの引数には、index, isSelected,  QtCore.Qt.ForegroundRoleを渡す
+            self.setData(index, True, QtCore.Qt.ForegroundRole)
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
 
@@ -277,7 +280,6 @@ class CandidateWidget(QtWidgets.QWidget):
         date = self.nightshiftModelIndex.model().headerData(parentRow, QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
         self.nightshiftModel.setData(self.nightshiftModelIndex, staff, QtCore.Qt.EditRole)
         self.close()
-        #print(f'{staff}__{date}__{job}')
 
     '''
     候補者レコード = '氏名','休日','連続勤務回数','夜勤回数','日直回数' を出力
