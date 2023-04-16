@@ -1,7 +1,4 @@
-import inspect
-import os, sys
 import datetime
-import pathlib
 
 import numpy as np
 import pandas
@@ -25,24 +22,48 @@ class CandidateModel(TableModel):
 class Model(QtCore.QAbstractTableModel):
     def __init__(self, shiftChannel: ShiftChannel):
         super(Model, self).__init__()
-        self._dataframe: pandas.DataFrame = shiftChannel.shiftCtrl.getYakinForm()
-        self.undoframe = self._dataframe.copy()
         self.shiftChannel = shiftChannel
+        self._uidframe = shiftChannel.shiftCtrl.getYakinForm_uid()
+        self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
+        self.undoframe = self._dataframe.copy()
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
-        self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
-        #文字色の設定がはいっているDataFrame
+        self.rows,self.cols = self._dataframe.shape
+        self._colorPlace = {col: {row: QColor('#00000000') for row in range(self.rows)} for col in range(self.cols)}
         #初期状態の文字色は黒
-        self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
+        self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+        # self._wordColorのshapeを確認
         self.matching_cells = []
+        
+        # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
+        self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
-        for i in range(len(self._dataframe)):
-            for j in range(4):
+        for i in range(self.rows):
+            for j in range(self.cols):
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
-                    self._colorPlace.iloc[i, j] = QColor('#EBFF00')
+                    self._colorPlace[j][i] = QColor('#EBFF00')
+
+    def wordColorGen(self, uid):
+
+        #self._wordColorと同じshapeの空の辞書を作成
+        template =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+
+        # 引数のuidと一致する要素のインデックスをすべて取得
+        idx = np.where(self._uidframe.values == uid)
+
+        if len(idx[0]) > 0:
+            # idxにあるインデックスすべてに対して、templateの要素を変更
+            for i in range(len(idx[0])):
+                # templateの変更には、オレンジ色を設定
+                template[idx[1][i]][idx[0][i]] = QColor('#FFA500')
+            return template
+            
+        else:
+            return None
+        
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -54,9 +75,10 @@ class Model(QtCore.QAbstractTableModel):
             return str(self._dataframe.iloc[index.row(), index.column()])
         # 色付けのコード追記
         if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
-            return self._colorPlace.iloc[index.row(), index.column()]
+            return self._colorPlace[index.column()][index.row()]
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
-            return self._wordColor.iloc[index.row(), index.column()]
+            # indexにあるQColorのhex色を確認
+            return self._wordColor[index.column()][index.row()]
         # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
         # if (index.row(), index.column()) in self.DummyPlace:
         # return QtGui.QColor('#EBFF00')
@@ -90,8 +112,14 @@ class Model(QtCore.QAbstractTableModel):
             self.dataChanged.emit(index, index)
             return True
         elif role == QtCore.Qt.ForegroundRole:
-            # 文字色の設定
-            self._wordColor.iat[index.row(), index.column()] = value
+            #roleがForegroundRoleのとき、次の値が渡されてくる
+            # index = selectedindex or diselectedindex, value: boolean = isSelected
+
+            # value = Trueのとき、self._wordColorにindexに該当するwordColorDictの値を代入
+            if value:
+                uid = self._uidframe.iat[index.row(), index.column()]
+                self._wordColor = self.wordColorDict[uid] 
+            # value = Falseのとき、多分今は何もしなくていい
 
             # dataChangedシグナルを発生させて表示の更新を要求する
             self.dataChanged.emit(index, index)
@@ -126,38 +154,17 @@ class Model(QtCore.QAbstractTableModel):
     def refreshData(self):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
         
-    # 選択されたセルと同じ値を持つセルの文字色をオレンジに変更する関数
+
     def update_cell_color(self, selected, deselected):
-    #!!!!!!!!!!!!!!以下のfor文は順番を変更しないでください!!!!!!!!!!!!!!
-        # 選択が外れたとき
-        for _index in deselected.indexes():
-            self.set_cell_color(QColor('#000000'))
-            self.matching_cells = []
+        # 選択が外れたとき -> 何もしなくていい
+        # for _index in deselected.indexes():
 
         # 選択されたとき
         for index in selected.indexes():
-            self.find_matching_cells(index)
-            self.set_cell_color(QColor('#FFA500'))
-
-
-    # 選択されたセルと同じ値を持つセルを探す関数
-    def find_matching_cells(self, selected_index):
-        selected_value = self._dataframe.iat[selected_index.row(), selected_index.column()]
-        for col_name, col_data in self._dataframe.iteritems():
-            for row_name, row_data in col_data.iteritems():
-                if selected_value == row_data:
-                    col_index = self._dataframe.columns.get_loc(col_name)
-                    row_index = self._dataframe.index.get_loc(row_name)
-                    index = self.index(row_index, col_index)
-                    if index not in self.matching_cells:
-                        self.matching_cells.append(index)
-
-    # セルの文字色を変更する関数
-    def set_cell_color(self, color):
-        for i in self.matching_cells:
-            self.setData(i, color, QtCore.Qt.ForegroundRole)
-            print(f'selectionChange: {i.row()}, {i.column()}, {self._wordColor.iat[i.row(), i.column()].name()}')
-
+            # ここで直接self._wordColorを書き換えても表示は変わらない
+            # setData関数を使う必要がある
+            # setDataの引数には、index, isSelected,  QtCore.Qt.ForegroundRoleを渡す
+            self.setData(index, True, QtCore.Qt.ForegroundRole)
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
 
@@ -273,7 +280,6 @@ class CandidateWidget(QtWidgets.QWidget):
         date = self.nightshiftModelIndex.model().headerData(parentRow, QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
         self.nightshiftModel.setData(self.nightshiftModelIndex, staff, QtCore.Qt.EditRole)
         self.close()
-        #print(f'{staff}__{date}__{job}')
 
     '''
     候補者レコード = '氏名','休日','連続勤務回数','夜勤回数','日直回数' を出力

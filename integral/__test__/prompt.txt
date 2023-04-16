@@ -1,0 +1,21 @@
+以下のコードにて、コンストラクタにpandas DataFrameからdictionaryに変換したものを用意してください。
+そして、data methodにはpandas DataFrameを試用せず、用意したdictionaryを使用するようにコードを書き換えてください。
+
+class Model(QtCore.QAbstractTableModel):
+    def __init__(self, shiftChannel: ShiftChannel):
+        super(Model, self).__init__()
+        self._dataframe: pandas.DataFrame = shiftChannel.shiftCtrl.getYakinForm()
+        self._colorPlace = pd.DataFrame(np.full(self._dataframe.shape, QColor('#00000000')))
+        #文字色の設定がはいっているDataFrame
+        self._wordColor = pd.DataFrame(np.full(self._dataframe.shape, QColor('#000000')))
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return str(self._dataframe.iloc[index.row(), index.column()])
+        # 色付けのコード追記
+        if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
+            return self._colorPlace.iloc[index.row(), index.column()]
+        if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            return self._wordColor.iloc[index.row(), index.column()]
+
+ 

@@ -21,13 +21,20 @@ class DataName(Enum):
 
 class DataSender(DataReader):
 
-
-
     def __init__(self):
         super().__init__()
         self.rk = int(self.config['iota'][0])
         self.kinmu_full = None 
-        
+    # getYakinForm_uidの戻り値であるdataframeの要素を、uidからnameに変換するデコレータ
+    def uid2name(func):
+        def wrapper(self, *args, **kwargs):
+            df:pd.DataFrame = func(self, *args, **kwargs)
+            #ここでうけとるdfは、getYakinForm_uidの戻り値
+            for uid, person in self.members.items():
+                df = df.replace(uid, person.name)
+            return df
+        return wrapper
+
 
     def toHeader_fullspan(self) -> list[str]:
         locale.setlocale(locale.LC_TIME, 'ja_JP')
@@ -64,23 +71,42 @@ class DataSender(DataReader):
     日付 *uid
     
     """
-    @Debugger.toCSV 
-    def getYakinForm(self) -> pd.DataFrame:
-        # df.at[strday, int(job)] is not None
-        # math.isnan(df.at[strday, int(job)])
+    # @Debugger.toCSV 
+    # def getYakinForm(self) -> pd.DataFrame:
+    #     # df.at[strday, int(job)] is not None
+    #     # math.isnan(df.at[strday, int(job)])
+    #     df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
+    #     for person in self.members.values():
+    #         for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
+    #             if job  in ["4", "5", "6", "0", "1", "2", "3"]:
+    #                 if type(df.at[strday, int(job)]) is str and job == "3":
+    #                     df.at[strday, -3] = person.name
+    #                 else:
+    #                     df.at[strday, int(job)] = person.name
+
+    #     # print(df.loc[:"2023-04-05", [1, 2]])
+    #     return df.where(df.notna(),'')
+    
+    # getYakinFormの、dataframeの値にuidをいれるver
+    # @Debugger.toCSV
+    def getYakinForm_uid(self) -> pd.DataFrame:
         df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
-        for person in self.members.values():
+        for uid, person in self.members.items():
             for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
                 if job  in ["4", "5", "6", "0", "1", "2", "3"]:
                     if type(df.at[strday, int(job)]) is str and job == "3":
-                        df.at[strday, -3] = person.name
+                        df.at[strday, -3] = uid 
                     else:
-                        df.at[strday, int(job)] = person.name
+                        df.at[strday, int(job)] = uid
 
-        # print(df.loc[:"2023-04-05", [1, 2]])
         return df.where(df.notna(),'')
-
-
+    
+    #↓発展的！
+    #uid2nameデコレータは、起動時に実行される。
+    #つまり、getYakinFormはクラスメソッドではなく、インスタンスメソッドになる。
+    #何が言いたいかというと、getYakinFormはdatファイルを読み込んだインスタンスの情報を参照するということ
+    getYakinForm = uid2name(getYakinForm_uid)
+    
     @ConvertTable.id2Name
     def getKinmuForm(self, dataName: DataName) -> pd.DataFrame:
         """ 
@@ -402,3 +428,4 @@ class DataSender(DataReader):
    #dfrenzoku
     #dfskill
     #dfkinmuhyou_long
+    
