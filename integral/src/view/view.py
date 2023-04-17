@@ -467,7 +467,7 @@ class ShiftModel(TableModel):
         self.setBackgroundColors()
         self.setTextColors()
         
-        self._data.to_csv('C:\\Users\\unawa\\Documents\\ProgramSpace\\shiftManager\\work\\integral\\log\\kinmudata.csv')
+        # self._data.to_csv('C:\\Users\\unawa\\Documents\\ProgramSpace\\shiftManager\\work\\integral\\log\\kinmudata.csv')
 
     def data(self, index: QModelIndex, role=Qt.ItemDataRole):
         if not index.isValid():
