@@ -367,14 +367,15 @@ class DataSender(DataReader):
     
     def getAccessData(self):
         data = []
+        holidays = self.getJapanHolidayDF()
         for uid, person in self.members.items():
             for date in self.now_next_month:
-                if (date not in person.requestPerDay.keys() 
-                    and (person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)
+                if ((person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)  #該当する日付の勤務が'勤'でなく，かつNoneでない->日勤はデータベースへ値を送らない
                     and uid < 900):
                     # job = ConvertTable.convertTable[person.jobPerDay[date]]
                     if date in person.requestPerDay.keys():
                         job = ConvertTable.convertTable[person.requestPerDay[date]]
+
                     else:
                         job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
@@ -387,6 +388,7 @@ class DataSender(DataReader):
         database_path = readSettingJson('DATABASE_PATH')
         # [uid, workdate, shift]
         records = self.getAccessData()
+
 
         conn_str = (
             r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
@@ -401,7 +403,7 @@ class DataSender(DataReader):
             job = record[2]
             updating = datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S')
             operator = "admin"
-            # print(f'{uid}__{workdate}__{job}__{updating}__{operator}')
+            
             sql = (
                 f"SELECT count(*) "
                 f"FROM tblShift "
@@ -422,7 +424,7 @@ class DataSender(DataReader):
                     f"VALUES({uid}, #{workdate}#, '{job}', #{updating}#, '{operator}')"
                 )
             cursor.execute(sql)
-
+            conn.commit()
         cursor.close()
         print("OK")
    #dfrenzoku
