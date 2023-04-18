@@ -92,9 +92,9 @@ class MainWindow(QMainWindow):
         self.yakinModel.refreshData()
         self.yakinView.view.viewport().update()
 
-    def refreshYakinAppearance(self, selected, deselected):
-        self.yakinModel.update_cell_color(selected, deselected)
-        self.yakinView.view.viewport().update()
+    # def refreshYakinAppearance(self, selected, deselected):
+    #     self.yakinModel.update_cell_color(selected, deselected)
+    #     self.yakinView.view.viewport().update()
 
     def refreshKinmuTable(self):
         self.shiftModel.refreshData()

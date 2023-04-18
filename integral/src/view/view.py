@@ -263,7 +263,9 @@ class BaseView(QTableView):
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.NoSelection)
         # self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-
+        font = QFont()
+        font.setPointSize(8)
+        self.setFont(font)
 class TableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         super().__init__()

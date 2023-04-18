@@ -94,11 +94,12 @@ class DataSender(DataReader):
         for uid, person in self.members.items():
             for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
                 if job  in ["4", "5", "6", "0", "1", "2", "3"]:
-                    if type(df.at[strday, int(job)]) is str and job == "3":
+                    if pd.notnull(df.at[strday, 3]) and job == "3":
+                    # if df.at[strday, 3].notnull() and job == "3":
                         df.at[strday, -3] = uid 
                     else:
                         df.at[strday, int(job)] = uid
-
+        df = df.rename(columns={4:'A夜', 5:'M夜', 6:'C夜', 0:'A日', 1:'M日', 2:'C日', 3:'F日1', -3:'F日2'})
         return df.where(df.notna(),'')
     
     #↓発展的！
