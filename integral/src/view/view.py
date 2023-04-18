@@ -5,7 +5,7 @@ from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
 from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent
 from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemView, 
                             QGridLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
-                            QStyledItemDelegate)
+                            QStyledItemDelegate, QHeaderView)
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
@@ -104,13 +104,6 @@ class ShiftTableWidget(QWidget):
         colum2=len(data.columns)
         tail=colum2-1#変更された行の今月分のみ取得#今月分データ
         data2=data.iloc[:,:tail]
-        
-        
-        #連続勤務計算
-        #print(data2)
-
-        # cwork=0#加算用変数
-        # l=[]#格納リスト
 
         self.init_count_func_con(data, iota, columss, colum2, tail, data2)
 
@@ -123,47 +116,11 @@ class ShiftTableWidget(QWidget):
             #最大連続勤務日数の計算
             mwork = count_consecutive_workdays(data2, z, tail) 
 
-            # for i in range(tail):
-                    
-            #             zzz=data2.iloc[z,i]
-                        
-            #             if zzz=='休':
-            #                 l.append(cwork)
-            #                 cwork=0
-            #             elif zzz=='暇':
-            #                 l.append(cwork)
-            #                 cwork=0
-            #             elif zzz=='夏':
-            #                 l.append(cwork)
-            #                 cwork=0
-            #             elif zzz=='特':
-            #                 l.append(cwork)
-            #                 cwork=0
-            #             else :
-            #                 cwork+=1
-            # if i==colum2-1:
-            #     l.append(cwork)
-            #     cwork=0
-
-
-                     #リストlに値が存在する場合
-            # if l:
-            # mwork=max(l)
             index = self.countView.model().index(z, 0,QModelIndex())
             index2 = self.countView.model().index(z, 1,QModelIndex())
             self.countView.model().setData(index2, kyu, Qt.EditRole)         
             self.countView.model().setData(index, mwork, Qt.EditRole)
-            #print(mwork)
-            # del l[:]
-            
-            # else:               #リストlに値がない場合
-            #     mwork=0
-            #     index = self.countView.model().index(z, 0,QModelIndex())
-            #     index2 = self.countView.model().index(z, 1,QModelIndex())
-            #     self.countView.model().setData(index2, kyu, Qt.EditRole)         
-            #     self.countView.model().setData(index, mwork, Qt.EditRole)
-            #     #print('none')
-            #     del l[:]
+
         for i in range(colum2):
             data5=data.iloc[:,i]
             data6=data5.T
@@ -274,9 +231,9 @@ class ShiftTableWidget(QWidget):
         iota =  int(*shiftModel.shiftCtrlChannel.shiftCtrl.config['iota'])
 
         data = self.shiftView.model()._data#全体データフレーム
-        print(f'{row}___{column}__{data}__{uid}___{date}')
-        print(row)
-        print(column)
+        # print(f'{row}___{column}__{data}__{uid}___{date}')
+        # print(row)
+        # print(column)
         #rowa=int(row)
         conwork = count_this_row(data,row,iota, want_to_count=ShiftElement.HOLIDAY)
         conworkcol=countfunc_col(data,column)
@@ -305,6 +262,7 @@ class BaseView(QTableView):
         self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.NoSelection)
+        # self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 
 class TableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):

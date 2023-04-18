@@ -38,8 +38,8 @@ class MainWindow(QMainWindow):
         
         self.yakinView = yakinview.nightshiftDialog(self.yakinModel, shiftChannel)
         
-        selectionModel = self.yakinView.view.selectionModel()
-        selectionModel.selectionChanged.connect(self.refreshYakinAppearance)
+        # selectionModel = self.yakinView.view.selectionModel()
+        # selectionModel.selectionChanged.connect(self.refreshYakinAppearance)
 
 
         self.initUI()
@@ -52,8 +52,10 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
 
-        self.setWindowTitle('')
-        self.setGeometry(50, 50, 400, 150)
+        self.setWindowTitle('メイン')
+        self.shiftView.setWindowTitle('勤務表')
+        self.yakinView.setWindowTitle('夜勤表')
+        self.setGeometry(50, 50, 400, 100)
 
         registerAction = QAction('登録',self)
         registerAction.triggered.connect(self.register)

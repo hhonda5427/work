@@ -36,7 +36,7 @@ class Model(QtCore.QAbstractTableModel):
         
         # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
         self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
-
+        
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
         for i in range(self.rows):
@@ -182,18 +182,23 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        self.view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
         # # 選択モデルの取得
         # selectionModel = self.view.selectionModel() 
         # # 選択モデルとselectDataメソッドを接続
         # selectionModel.selectionChanged.connect(self.view.model().selectData)
-
+        self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
         
-        
+    def onSelectionChanged(self, selected, deselected):
+
+        self.model.update_cell_color(selected, deselected)
+        self.view.viewport().update()
+
     def dclickevent(self, item):
 
     # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
