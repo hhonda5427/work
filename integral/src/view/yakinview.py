@@ -23,19 +23,21 @@ class Model(QtCore.QAbstractTableModel):
     def __init__(self, shiftChannel: ShiftChannel):
         super(Model, self).__init__()
         self.shiftChannel = shiftChannel
-        self._uidframe = shiftChannel.shiftCtrl.getYakinForm_uid()
+        # self._uidframe = shiftChannel.shiftCtrl.getYakinForm_uid()
+        # print(self._uidframe)
         self._dataframe = shiftChannel.shiftCtrl.getYakinForm()
         self.undoframe = self._dataframe.copy()
         self.uidDict = {person.name: uid for uid, person, in self.shiftChannel.shiftCtrl.members.items()}
         self.rows,self.cols = self._dataframe.shape
         self._colorPlace = {col: {row: QColor('#00000000') for row in range(self.rows)} for col in range(self.cols)}
         #初期状態の文字色は黒
-        self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+        # self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
         # self._wordColorのshapeを確認
-        self.matching_cells = []
-        
+        # self.matching_cells = []
+        self._textColor = pd.DataFrame(data=[[QColor('#000000') for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
+        self._font = pd.DataFrame(data=[[False for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
         # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
-        self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
+        # self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
@@ -46,23 +48,42 @@ class Model(QtCore.QAbstractTableModel):
                     self.DummyPlace.append(dummy_place)
                     self._colorPlace[j][i] = QColor('#EBFF00')
 
-    def wordColorGen(self, uid):
+    def textColorGen(self, idx):
 
-        #self._wordColorと同じshapeの空の辞書を作成
-        template =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+        name = self._dataframe.iat[idx.row(), idx.column()]
+        if name is None:
+            return None
 
-        # 引数のuidと一致する要素のインデックスをすべて取得
-        idx = np.where(self._uidframe.values == uid)
+        template = []
 
-        if len(idx[0]) > 0:
-            # idxにあるインデックスすべてに対して、templateの要素を変更
-            for i in range(len(idx[0])):
-                # templateの変更には、オレンジ色を設定
-                template[idx[1][i]][idx[0][i]] = QColor('#FFA500')
+        idx_row, idx_col = np.where(self._dataframe.values == name)
+  
+        if len(idx_row) > 0:
+            for i in range(len(idx_row)):
+                template.append((idx_row[i], idx_col[i]))
+
             return template
-            
+
         else:
             return None
+        
+    # def wordColorGen(self, uid):
+
+    #     #self._wordColorと同じshapeの空の辞書を作成
+    #     template =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
+
+    #     # 引数のuidと一致する要素のインデックスをすべて取得
+    #     idx = np.where(self._uidframe.values == uid)
+
+    #     if len(idx[0]) > 0:
+    #         # idxにあるインデックスすべてに対して、templateの要素を変更
+    #         for i in range(len(idx[0])):
+    #             # templateの変更には、オレンジ色を設定
+    #             template[idx[1][i]][idx[0][i]] = QColor('#FFA500')
+    #         return template
+            
+    #     else:
+    #         return None
         
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
@@ -78,10 +99,14 @@ class Model(QtCore.QAbstractTableModel):
             return self._colorPlace[index.column()][index.row()]
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
             # indexにあるQColorのhex色を確認
-            return self._wordColor[index.column()][index.row()]
-        # if role == QtCore.Qt.ItemDataRole.BackgroundColorRole:
-        # if (index.row(), index.column()) in self.DummyPlace:
-        # return QtGui.QColor('#EBFF00')
+            return self._textColor[index.column()][index.row()]
+        
+        elif role == QtCore.Qt.FontRole:            
+            font = QtGui.QFont()   
+            flg = self._font.iat[index.row(), index.column()]
+            font.setBold(flg)
+            font.setItalic(flg)
+            return QtCore.QVariant(font)
 
     def rowCount(self, index):
         return len(self._dataframe)
@@ -112,19 +137,13 @@ class Model(QtCore.QAbstractTableModel):
             self.dataChanged.emit(index, index)
             return True
         elif role == QtCore.Qt.ForegroundRole:
-            #roleがForegroundRoleのとき、次の値が渡されてくる
-            # index = selectedindex or diselectedindex, value: boolean = isSelected
 
-            # value = Trueのとき、self._wordColorにindexに該当するwordColorDictの値を代入
-            if value:
-                uid = self._uidframe.iat[index.row(), index.column()]
-                self._wordColor = self.wordColorDict[uid] 
-            # value = Falseのとき、多分今は何もしなくていい
-
-            # dataChangedシグナルを発生させて表示の更新を要求する
-            self.dataChanged.emit(index, index)
+            self._textColor.iat[index.row(), index.column()] = value
             return True
-
+        elif role == QtCore.Qt.FontRole:
+        
+            self._font.iat[index.row(), index.column()] = value
+            return True
         # 上記条件以外ならFalseを返す
         return False
     
@@ -155,16 +174,16 @@ class Model(QtCore.QAbstractTableModel):
         self._dataframe = self.shiftChannel.shiftCtrl.getYakinForm()
         
 
-    def update_cell_color(self, selected, deselected):
-        # 選択が外れたとき -> 何もしなくていい
-        # for _index in deselected.indexes():
+    # def update_cell_color(self, selected, deselected):
+    #     # 選択が外れたとき -> 何もしなくていい
+    #     # for _index in deselected.indexes():
 
-        # 選択されたとき
-        for index in selected.indexes():
-            # ここで直接self._wordColorを書き換えても表示は変わらない
-            # setData関数を使う必要がある
-            # setDataの引数には、index, isSelected,  QtCore.Qt.ForegroundRoleを渡す
-            self.setData(index, True, QtCore.Qt.ForegroundRole)
+    #     # 選択されたとき
+    #     for index in selected.indexes():
+    #         # ここで直接self._wordColorを書き換えても表示は変わらない
+    #         # setData関数を使う必要がある
+    #         # setDataの引数には、index, isSelected,  QtCore.Qt.ForegroundRoleを渡す
+    #         self.setData(index, True, QtCore.Qt.ForegroundRole)
 # 夜勤表
 class nightshiftDialog(QtWidgets.QDialog):
 
@@ -182,25 +201,97 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        self.view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.view.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.view.setFont(font)
+
         #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
-        # # 選択モデルの取得
-        # selectionModel = self.view.selectionModel() 
-        # # 選択モデルとselectDataメソッドを接続
-        # selectionModel.selectionChanged.connect(self.view.model().selectData)
 
+        self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
+        self.view.model().dataChanged.connect(self.onDataChanged)
+        
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
-        
-        
+
+    # 右クリックしたときのイベント設定
+    def contextMenuEvent(self, event):
+        # 右クリックされた位置を取得し、その位置にメニューを表示
+        pos = self.getEventPos(event.pos())
+        selectedIndex = self.view.selectionModel().selectedIndexes()
+        if len(selectedIndex) != 1:
+            return None
+        index = selectedIndex[0]
+        if index.isValid():
+            menu = QMenu(self)
+            action = QAction('交代スタッフを探す')
+ 
+            action.triggered.connect(lambda:self.onContextMenuActionTriggered(index))
+            menu.addAction(action)
+            menu.exec_(self.mapToGlobal(pos))
+
+    # def showContextMenu(self, index, pos):
+
+    #     print(f'{index.row()}____{index.column()}')
+    #     if index.isValid():
+    #         menu = QMenu(self)
+    #         action = QAction('交代スタッフを探す')
+ 
+    #         action.triggered.connect(lambda:self.onContextMenuActionTriggered(index))
+    #         menu.addAction(action)
+    #         menu.exec_(self.mapToGlobal(pos))
+
+    def getEventPos(self, pos: QtCore.QPoint):
+        # ヘッダーの高さを考慮して位置を取得する
+        headerHeight = self.view.verticalHeader().defaultSectionSize()
+        headerWidth = self.view.horizontalHeader().defaultSectionSize()
+        pos.setX(pos.x()-headerWidth)
+        pos.setY(pos.y()-headerHeight)
+
+        return pos
+    
+    def onContextMenuActionTriggered(self, index):
+
+        self.candidate = CandidateWidget(self.shiftChannel, self.model, index)
+        self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.candidate.show()
+
+    def onSelectionChanged(self, selected, deselected):
+
+        for ix in deselected.indexes(): 
+            self.setFontColor(ix, QColor('#000000'), False)      
+
+        for ix in selected.indexes():
+            self.setFontColor(ix, QColor('#FFA500'), True) 
+
+        self.view.viewport().update()
+
+    def setFontColor(self, index, color: QColor, fontFlg):
+            textColorList = self.model.textColorGen(index)
+            for row, col in textColorList:
+                index = self.model.index(row, col, QtCore.QModelIndex())
+                self.model.setData(index, color, QtCore.Qt.ForegroundRole)
+                self.model.setData(index, fontFlg, QtCore.Qt.FontRole)       
+
+    def onDataChanged(self, index):
+        #一括で_textColor，_fontを初期化する
+        self.model._textColor.values[:] = QColor('#000000')
+        self.model._font.values[:] = False
+
+        self.setFontColor(index, QColor('#FFA500'), True) 
+
+        self.view.viewport().update()
+
     def dclickevent(self, item):
 
     # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
-        if (item.row(), item.column()) in self.model.DummyPlace:
-            self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
-            self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.candidate.show()
+        # if (item.row(), item.column()) in self.model.DummyPlace:
+        self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
+        self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.candidate.show()
 
     def fn_get_cell_Value(self, index):
         datas = index.data()
@@ -269,7 +360,8 @@ class CandidateWidget(QtWidgets.QWidget):
 
 
     def dclickevent(self, index):
-        # 編集時のダブルクリックイベント
+        # # 編集時のダブルクリックイベント
+
         row = index.row()
         selected = self.createCandidate().iat[index.row(), index.column()]
         parentRow = self.nightshiftModelIndex.row()
@@ -279,6 +371,8 @@ class CandidateWidget(QtWidgets.QWidget):
         job = self.nightshiftModelIndex.model().headerData(parentCol, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
         date = self.nightshiftModelIndex.model().headerData(parentRow, QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
         self.nightshiftModel.setData(self.nightshiftModelIndex, staff, QtCore.Qt.EditRole)
+        
+
         self.close()
 
     '''

@@ -94,11 +94,12 @@ class DataSender(DataReader):
         for uid, person in self.members.items():
             for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
                 if job  in ["4", "5", "6", "0", "1", "2", "3"]:
-                    if type(df.at[strday, int(job)]) is str and job == "3":
+                    if pd.notnull(df.at[strday, 3]) and job == "3":
+                    # if df.at[strday, 3].notnull() and job == "3":
                         df.at[strday, -3] = uid 
                     else:
                         df.at[strday, int(job)] = uid
-
+        df = df.rename(columns={4:'A夜', 5:'M夜', 6:'C夜', 0:'A日', 1:'M日', 2:'C日', 3:'F日1', -3:'F日2'})
         return df.where(df.notna(),'')
     
     #↓発展的！
@@ -176,9 +177,11 @@ class DataSender(DataReader):
         # 任意列を分類カテゴリが入っているカラムにする
         # df = df.sort_values(by = ['uid'], ascending=True)
         df['モダリティ'] = pd.Categorical(df['モダリティ'], categories=sort_order)
-        df = df.sort_values(by=['モダリティ', 'uid'], ascending=[True, True])
+        df = df.sort_values(by=['モダリティ', '職員番号'], ascending=[True, True])
+        df = df.drop(columns=['uid', '職員番号'])
         return df
 
+    
     # 日付の配列の中で休みを返す
     def getJapanHolidayDF(self):
         holidayHandler = JapanHoliday()
@@ -367,14 +370,15 @@ class DataSender(DataReader):
     
     def getAccessData(self):
         data = []
+        holidays = self.getJapanHolidayDF()
         for uid, person in self.members.items():
             for date in self.now_next_month:
-                if (date not in person.requestPerDay.keys() 
-                    and (person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)
+                if ((person.jobPerDay[date] != '8' and person.jobPerDay[date] is not None)  #該当する日付の勤務が'勤'でなく，かつNoneでない->日勤はデータベースへ値を送らない
                     and uid < 900):
                     # job = ConvertTable.convertTable[person.jobPerDay[date]]
                     if date in person.requestPerDay.keys():
                         job = ConvertTable.convertTable[person.requestPerDay[date]]
+
                     else:
                         job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
@@ -387,6 +391,7 @@ class DataSender(DataReader):
         database_path = readSettingJson('DATABASE_PATH')
         # [uid, workdate, shift]
         records = self.getAccessData()
+
 
         conn_str = (
             r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
@@ -401,7 +406,7 @@ class DataSender(DataReader):
             job = record[2]
             updating = datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S')
             operator = "admin"
-            # print(f'{uid}__{workdate}__{job}__{updating}__{operator}')
+            
             sql = (
                 f"SELECT count(*) "
                 f"FROM tblShift "
@@ -422,7 +427,7 @@ class DataSender(DataReader):
                     f"VALUES({uid}, #{workdate}#, '{job}', #{updating}#, '{operator}')"
                 )
             cursor.execute(sql)
-
+            conn.commit()
         cursor.close()
         print("OK")
    #dfrenzoku

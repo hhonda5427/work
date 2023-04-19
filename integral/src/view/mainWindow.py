@@ -1,4 +1,5 @@
 
+import sys
 # import logging
 # from Event.observer import Observer
 from PyQt5.QtWidgets import *
@@ -38,10 +39,10 @@ class MainWindow(QMainWindow):
         
         self.yakinView = yakinview.nightshiftDialog(self.yakinModel, shiftChannel)
         
-        selectionModel = self.yakinView.view.selectionModel()
-        selectionModel.selectionChanged.connect(self.refreshYakinAppearance)
+        # selectionModel = self.yakinView.view.selectionModel()
+        # selectionModel.selectionChanged.connect(self.refreshYakinAppearance)
 
-
+        self.replaceTable()
         self.initUI()
 
         self.show()
@@ -52,8 +53,10 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
 
-        self.setWindowTitle('')
-        self.setGeometry(50, 50, 400, 150)
+        self.setWindowTitle('メイン')
+        self.shiftView.setWindowTitle('勤務表')
+        self.yakinView.setWindowTitle('夜勤表')
+        
 
         registerAction = QAction('登録',self)
         registerAction.triggered.connect(self.register)
@@ -79,6 +82,18 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(btn_layout)
         self.setCentralWidget(central_widget)
 
+    def replaceTable(self):
+
+        display_count = QApplication.desktop().screenCount()
+        #デュアルモニタの場合はモニタ2に優先して出力する
+        if display_count > 1:
+            display = QApplication.screens()[1].availableGeometry()
+        else:
+            display = QApplication.primaryScreen().availableGeometry()
+        self.setGeometry(10, 50, 400, 100)
+        self.yakinView.setGeometry(0, 200, int(display.width()*0.4), int(display.height()-210))
+        self.shiftView.setGeometry(int(display.width()*0.4), 200, int(display.width()*0.6), int(display.height()-210))
+
     def showTable(self, view):
 
         if view.isVisible():
@@ -90,9 +105,9 @@ class MainWindow(QMainWindow):
         self.yakinModel.refreshData()
         self.yakinView.view.viewport().update()
 
-    def refreshYakinAppearance(self, selected, deselected):
-        self.yakinModel.update_cell_color(selected, deselected)
-        self.yakinView.view.viewport().update()
+    # def refreshYakinAppearance(self, selected, deselected):
+    #     self.yakinModel.update_cell_color(selected, deselected)
+    #     self.yakinView.view.viewport().update()
 
     def refreshKinmuTable(self):
         self.shiftModel.refreshData()
