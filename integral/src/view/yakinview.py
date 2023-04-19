@@ -67,24 +67,6 @@ class Model(QtCore.QAbstractTableModel):
         else:
             return None
         
-    # def wordColorGen(self, uid):
-
-    #     #self._wordColorと同じshapeの空の辞書を作成
-    #     template =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
-
-    #     # 引数のuidと一致する要素のインデックスをすべて取得
-    #     idx = np.where(self._uidframe.values == uid)
-
-    #     if len(idx[0]) > 0:
-    #         # idxにあるインデックスすべてに対して、templateの要素を変更
-    #         for i in range(len(idx[0])):
-    #             # templateの変更には、オレンジ色を設定
-    #             template[idx[1][i]][idx[0][i]] = QColor('#FFA500')
-    #         return template
-            
-    #     else:
-    #         return None
-        
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -354,11 +336,19 @@ class CandidateWidget(QtWidgets.QWidget):
         self.view.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.view.doubleClicked.connect(self.dclickevent)
+        self.setTitle()
         layout = QHBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
 
+    def setTitle(self):
+        row = self.nightshiftModelIndex.row()
+        col = self.nightshiftModelIndex.column()
+        strday = self.nightshiftModel.headerData(row, QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
+        job = self.nightshiftModel.headerData(col, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
 
+        self.setWindowTitle(f'{strday} : {job}の候補者')
+    
     def dclickevent(self, index):
         # # 編集時のダブルクリックイベント
 
