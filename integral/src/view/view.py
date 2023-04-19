@@ -2,10 +2,10 @@ import pandas as pd
 import datetime
 
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
-from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent
-from PyQt5.QtWidgets import (QTableView, QApplication, QWidget, QAbstractItemView, 
+from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent, QIcon
+from PyQt5.QtWidgets import (QTableView, QWidget, QAbstractItemView, 
                             QGridLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
-                            QStyledItemDelegate, QHeaderView)
+                            QStyledItemDelegate, QGraphicsView, QGraphicsScene)
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
@@ -42,7 +42,7 @@ class ShiftTableWidget(QWidget):
 
         self.rowHeaderView = BaseView()
         self.rowHeaderView.setModel(self.rowHeaderModel)
-        self.rowHeaderView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        # self.rowHeaderView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.rowHeaderView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
         
         self.shiftView = BaseView()
@@ -88,18 +88,14 @@ class ShiftTableWidget(QWidget):
         self.setLayout(layout)
         self.setContentsMargins(5, 0, 0, 0)
         self.setMinimumSize(1000, 400)
-        
+
+# ---------------------------------------------------------------
+
         data=self.shiftView.model()._data
         
         iota =  int(*shiftModel.shiftCtrlChannel.shiftCtrl.config['iota'])
-        
-       
+   
         #・・・連続勤務日数の計算・・・
-    
-        #結果格納リスト
-
-        #行列の長さの取得
-        
         columss=len(data.index)
         colum2=len(data.columns)
         tail=colum2-1#変更された行の今月分のみ取得#今月分データ
@@ -131,10 +127,16 @@ class ShiftTableWidget(QWidget):
     
         #data2.to_csv("kinmucount.csv",encoding="Shift-JIS")
     
+    def TableLabel(self, text):
+        scene = QGraphicsScene()
+        scene.addText(text)
+        graphicView = QGraphicsView()
+        graphicView.setScene(scene)
+        graphicView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        graphicView.setMaximumSize(30, 500)
+        graphicView.rotate(-90)
     
-               
-                    
-                    
+        return graphicView               
                     
     def setColumnWidth(self):
         staffwidth = [30, 80, 100, 30]
@@ -251,21 +253,21 @@ class BaseView(QTableView):
     def __init__(self, parent=None, *args):
         super().__init__()
         
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.verticalHeader().hide()
         self.horizontalHeader().hide()
-        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.NoSelection)
-        # self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
         font = QFont()
         font.setPointSize(8)
         self.setFont(font)
+
 class TableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         super().__init__()

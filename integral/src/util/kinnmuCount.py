@@ -127,11 +127,11 @@ def count_consecutive_column(column, want_to_countList: list[ShiftElement]):
 
     unique_elements = set([element.value for element in want_to_countList])
 
-    print(f'column: {column}')
+    # print(f'column: {column}')
     for value in column:
         if value in unique_elements:
             current_consecutive += 1
-            print(f'current_consecutive: {current_consecutive}')
+            # print(f'current_consecutive: {current_consecutive}')
             max_consecutive = max(max_consecutive, current_consecutive)
         else:
             current_consecutive = 0
@@ -184,7 +184,7 @@ def count_this_row(data,changedRow,iota, want_to_count: ShiftElement):
         ]
     max_consective_workdays = count_consecutive_column(nowMonthColumn, workList) 
 
-    print(f'最大連続勤務日数:{max_consective_workdays}')
+    # print(f'最大連続勤務日数:{max_consective_workdays}')
 
     #数えたい文字列の出現回数をカウント
     wanted_count = count_strings(nowMonthColumn, [want_to_count.value])
