@@ -126,20 +126,9 @@ class ShiftTableWidget(QWidget):
             self.columnHeaderView.model().setData(index3,kyu2,Qt.EditRole)
     
         #data2.to_csv("kinmucount.csv",encoding="Shift-JIS")
-    
-    def TableLabel(self, text):
-        scene = QGraphicsScene()
-        scene.addText(text)
-        graphicView = QGraphicsView()
-        graphicView.setScene(scene)
-        graphicView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        graphicView.setMaximumSize(30, 500)
-        graphicView.rotate(-90)
-    
-        return graphicView               
-                    
+          
     def setColumnWidth(self):
-        staffwidth = [30, 80, 100, 30]
+        staffwidth = [100, 30]
         ncol = self.shiftModel.columnCount()
         for col in range(ncol):
             self.columnHeaderView.setColumnWidth(col, COLUMNWIDTH)
@@ -334,7 +323,7 @@ class RowHeaderModel(TableModel):
             return str(value)
 
         elif role == Qt.BackgroundRole:
-            if index.column() == 3:
+            if index.column() == 1:
                 return self._color[index.row()]
 
             return QColor('#00000000')
@@ -362,7 +351,7 @@ class RowHeaderModel(TableModel):
     def setColor(self):
 
         for row in range(len(self._data)):
-            dept = self._data.iat[row, 3]
+            dept = self._data.iat[row, 1]
             if dept in modalityColors:
                 self._color[row] = modalityColors[dept]
 

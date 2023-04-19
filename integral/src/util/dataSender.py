@@ -177,9 +177,11 @@ class DataSender(DataReader):
         # 任意列を分類カテゴリが入っているカラムにする
         # df = df.sort_values(by = ['uid'], ascending=True)
         df['モダリティ'] = pd.Categorical(df['モダリティ'], categories=sort_order)
-        df = df.sort_values(by=['モダリティ', 'uid'], ascending=[True, True])
+        df = df.sort_values(by=['モダリティ', '職員番号'], ascending=[True, True])
+        df = df.drop(columns=['uid', '職員番号'])
         return df
 
+    
     # 日付の配列の中で休みを返す
     def getJapanHolidayDF(self):
         holidayHandler = JapanHoliday()
