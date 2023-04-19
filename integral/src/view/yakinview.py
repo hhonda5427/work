@@ -206,43 +206,92 @@ class nightshiftDialog(QtWidgets.QDialog):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.view.setFont(font)
+
         #　ダブルクリックしたときのイベントを設定
         self.view.doubleClicked.connect(self.dclickevent)
-        # # 選択モデルの取得
-        # selectionModel = self.view.selectionModel() 
-        # # 選択モデルとselectDataメソッドを接続
-        # selectionModel.selectionChanged.connect(self.view.model().selectData)
+
         self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
+        self.view.model().dataChanged.connect(self.onDataChanged)
+        
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
-        
+
+    # 右クリックしたときのイベント設定
+    def contextMenuEvent(self, event):
+        # 右クリックされた位置を取得し、その位置にメニューを表示
+        pos = self.getEventPos(event.pos())
+        selectedIndex = self.view.selectionModel().selectedIndexes()
+        if len(selectedIndex) != 1:
+            return None
+        index = selectedIndex[0]
+        if index.isValid():
+            menu = QMenu(self)
+            action = QAction('交代スタッフを探す')
+ 
+            action.triggered.connect(lambda:self.onContextMenuActionTriggered(index))
+            menu.addAction(action)
+            menu.exec_(self.mapToGlobal(pos))
+
+    # def showContextMenu(self, index, pos):
+
+    #     print(f'{index.row()}____{index.column()}')
+    #     if index.isValid():
+    #         menu = QMenu(self)
+    #         action = QAction('交代スタッフを探す')
+ 
+    #         action.triggered.connect(lambda:self.onContextMenuActionTriggered(index))
+    #         menu.addAction(action)
+    #         menu.exec_(self.mapToGlobal(pos))
+
+    def getEventPos(self, pos: QtCore.QPoint):
+        # ヘッダーの高さを考慮して位置を取得する
+        headerHeight = self.view.verticalHeader().defaultSectionSize()
+        headerWidth = self.view.horizontalHeader().defaultSectionSize()
+        pos.setX(pos.x()-headerWidth)
+        pos.setY(pos.y()-headerHeight)
+
+        return pos
+    
+    def onContextMenuActionTriggered(self, index):
+
+        self.candidate = CandidateWidget(self.shiftChannel, self.model, index)
+        self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.candidate.show()
+
     def onSelectionChanged(self, selected, deselected):
 
-        for ix in deselected.indexes():
-            
-            textColorList = self.model.textColorGen(ix)
-            for row, col in textColorList:
-                index = self.model.index(row, col, QtCore.QModelIndex())
-                self.model.setData(index, QColor('#000000'), QtCore.Qt.ForegroundRole)
-                self.model.setData(index, False, QtCore.Qt.FontRole)
+        for ix in deselected.indexes(): 
+            self.setFontColor(ix, QColor('#000000'), False)      
 
         for ix in selected.indexes():
-            textColorList = self.model.textColorGen(ix)
+            self.setFontColor(ix, QColor('#FFA500'), True) 
+
+        self.view.viewport().update()
+
+    def setFontColor(self, index, color: QColor, fontFlg):
+            textColorList = self.model.textColorGen(index)
             for row, col in textColorList:
                 index = self.model.index(row, col, QtCore.QModelIndex())
-                self.model.setData(index, QColor('#FFA500'), QtCore.Qt.ForegroundRole)
-                self.model.setData(index, True, QtCore.Qt.FontRole)
-        # self.model.update_cell_color(selected, deselected)
+                self.model.setData(index, color, QtCore.Qt.ForegroundRole)
+                self.model.setData(index, fontFlg, QtCore.Qt.FontRole)       
+
+    def onDataChanged(self, index):
+        #一括で_textColor，_fontを初期化する
+        self.model._textColor.values[:] = QColor('#000000')
+        self.model._font.values[:] = False
+
+        self.setFontColor(index, QColor('#FFA500'), True) 
+
         self.view.viewport().update()
 
     def dclickevent(self, item):
 
     # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
-        if (item.row(), item.column()) in self.model.DummyPlace:
-            self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
-            self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.candidate.show()
+        # if (item.row(), item.column()) in self.model.DummyPlace:
+        self.candidate = CandidateWidget(self.shiftChannel, self.model, item)
+        self.candidate.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.candidate.show()
 
     def fn_get_cell_Value(self, index):
         datas = index.data()
@@ -311,7 +360,8 @@ class CandidateWidget(QtWidgets.QWidget):
 
 
     def dclickevent(self, index):
-        # 編集時のダブルクリックイベント
+        # # 編集時のダブルクリックイベント
+
         row = index.row()
         selected = self.createCandidate().iat[index.row(), index.column()]
         parentRow = self.nightshiftModelIndex.row()
@@ -321,6 +371,8 @@ class CandidateWidget(QtWidgets.QWidget):
         job = self.nightshiftModelIndex.model().headerData(parentCol, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
         date = self.nightshiftModelIndex.model().headerData(parentRow, QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
         self.nightshiftModel.setData(self.nightshiftModelIndex, staff, QtCore.Qt.EditRole)
+        
+
         self.close()
 
     '''
