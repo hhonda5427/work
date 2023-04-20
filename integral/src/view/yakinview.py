@@ -1,7 +1,6 @@
 import datetime
 
 import numpy as np
-import pandas
 import pandas as pd
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QColor
@@ -175,7 +174,8 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.shiftChannel = shiftChannel
         self.model = yakinModel
         self.initui()
-        # self.doubleClickObj = None
+        self._closed = shiftChannel.shiftCtrl.getJapanHolidayDF()
+
 
     def initui(self):
         self.view = QTableView()
@@ -204,9 +204,14 @@ class nightshiftDialog(QtWidgets.QDialog):
         # 右クリックされた位置を取得し、その位置にメニューを表示
         pos = self.getEventPos(event.pos())
         selectedIndex = self.view.selectionModel().selectedIndexes()
+        # セルを複数選択している場合はメニュー表示しない
         if len(selectedIndex) != 1:
             return None
+        # 平日の日勤ではメニューを表示しない
         index = selectedIndex[0]
+        day = self.view.model().headerData(index.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
+        if (day not in self._closed) and index.column() > 2:
+            return None       
         if index.isValid():
             menu = QMenu(self)
             action = QAction('交代スタッフを探す')
@@ -215,16 +220,6 @@ class nightshiftDialog(QtWidgets.QDialog):
             menu.addAction(action)
             menu.exec_(self.mapToGlobal(pos))
 
-    # def showContextMenu(self, index, pos):
-
-    #     print(f'{index.row()}____{index.column()}')
-    #     if index.isValid():
-    #         menu = QMenu(self)
-    #         action = QAction('交代スタッフを探す')
- 
-    #         action.triggered.connect(lambda:self.onContextMenuActionTriggered(index))
-    #         menu.addAction(action)
-    #         menu.exec_(self.mapToGlobal(pos))
 
     def getEventPos(self, pos: QtCore.QPoint):
         # ヘッダーの高さを考慮して位置を取得する
@@ -268,6 +263,10 @@ class nightshiftDialog(QtWidgets.QDialog):
         self.view.viewport().update()
 
     def dclickevent(self, item):
+        # 平日日勤は展開しない  item = index
+        day = self.view.model().headerData(item.row(), QtCore.Qt.Vertical, QtCore.Qt.DisplayRole)
+        if (day not in self._closed) and item.column() > 2:
+            return None     
 
     # ダブルクリックしたデータを編集できるか判定する　⇒　DummyPlaceかどうか
         # if (item.row(), item.column()) in self.model.DummyPlace:
@@ -434,7 +433,7 @@ class CandidateWidget(QtWidgets.QWidget):
         DFAGCoreNo = DFSkill[(DFSkill['Mo'] == 'AG') & (DFSkill['AG'] == '6')]
         DFMGCoreNo = DFSkill[(DFSkill['Mo'] == 'MG') & (DFSkill['MG'] == '6')]
         DFMTCoreNo = DFSkill[(DFSkill['Mo'] == 'MT') & (DFSkill['MT'] == '6')]
-
+        
         # 候補日のコアメンバーの計算
         # 入り・日直
         DFTargetDayStartCoreNo = DFTargetDaysJob.iloc[:, [0, 2]]
@@ -461,7 +460,7 @@ class CandidateWidget(QtWidgets.QWidget):
         DFTargetDayStartMGCoreNo = pd.merge(DFTargetDayStartCoreNo, DFMGCoreNo, on="UID", how='inner')
         # MT
         DFTargetDayStartMTCoreNo = pd.merge(DFTargetDayStartCoreNo, DFMTCoreNo, on="UID", how='inner')
-
+      
         # 明
         DFTargetDayEndCoreNo = DFTargetDaysJob.iloc[:, [1, 2]]
         DFTargetDayEndCoreNo = DFTargetDayEndCoreNo[(DFTargetDayEndCoreNo.iloc[:, 0] == "勤")]
