@@ -71,22 +71,6 @@ class DataSender(DataReader):
     日付 *uid
     
     """
-    # @Debugger.toCSV 
-    # def getYakinForm(self) -> pd.DataFrame:
-    #     # df.at[strday, int(job)] is not None
-    #     # math.isnan(df.at[strday, int(job)])
-    #     df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
-    #     for person in self.members.values():
-    #         for strday, job in zip(self.toHeader_nowMonth(), person.jobPerDay.values()):
-    #             if job  in ["4", "5", "6", "0", "1", "2", "3"]:
-    #                 if type(df.at[strday, int(job)]) is str and job == "3":
-    #                     df.at[strday, -3] = person.name
-    #                 else:
-    #                     df.at[strday, int(job)] = person.name
-
-    #     # print(df.loc[:"2023-04-05", [1, 2]])
-    #     return df.where(df.notna(),'')
-    
     # getYakinFormの、dataframeの値にuidをいれるver
     # @Debugger.toCSV
     def getYakinForm_uid(self) -> pd.DataFrame:
@@ -366,9 +350,8 @@ class DataSender(DataReader):
         d = {'Date': dateL, 'Job':jobL}
         return pd.DataFrame(data=d, index=uidL)
     #    return pd.DataFrame({'UID': uidL, 'Date': dateL, 'Job':jobL}) 
-
-    
-    def getAccessData(self):
+        
+    def getAccessData(self, isRequestOnly=False) -> list:
         data = []
         holidays = self.getJapanHolidayDF()
         for uid, person in self.members.items():
@@ -380,17 +363,20 @@ class DataSender(DataReader):
                         job = ConvertTable.convertTable[person.requestPerDay[date]]
 
                     else:
-                        job = ConvertTable.convertTable[person.jobPerDay[date]]
+                        if isRequestOnly:
+                            job = ""
+                        else:
+                            job = ConvertTable.convertTable[person.jobPerDay[date]]
                     line = [uid, self.strDate4Access(date), job]
                     
                     data.append(line) 
 
         return data
 
-    def send2accdb(self):
+    def send2accdb(self, isRequestOnly=False):
         database_path = readSettingJson('DATABASE_PATH')
         # [uid, workdate, shift]
-        records = self.getAccessData()
+        records = self.getAccessData(isRequestOnly)
 
 
         conn_str = (

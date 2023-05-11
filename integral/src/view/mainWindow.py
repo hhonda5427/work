@@ -58,6 +58,8 @@ class MainWindow(QMainWindow):
         self.yakinView.setWindowTitle('夜勤表')
         
 
+        initializeAction = QAction('初期化', self)
+        initializeAction.triggered.connect(self.initialize)
         registerAction = QAction('登録',self)
         registerAction.triggered.connect(self.register)
         exitAction = QAction('終了', self)
@@ -65,6 +67,7 @@ class MainWindow(QMainWindow):
 
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('ファイル')
+        fileMenu.addAction(initializeAction)
         fileMenu.addAction(registerAction)
         fileMenu.addAction(exitAction)
 
@@ -132,6 +135,15 @@ class MainWindow(QMainWindow):
             self.shiftChannel.shiftCtrl.send2accdb()
         elif ret == QMessageBox.No:
             pass
+    
+    def initialize(self):
+        print("initialize")
+        ret = QMessageBox.information(None, "初期化確認", "勤務表を初期化しますか",
+                                        QMessageBox.Yes, QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            self.shiftChannel.shiftCtrl.send2accdb(isRequestOnly=True)
+        elif ret == QMessageBox.No:
+            return
 
 
 # class MemberElemObserver(Observer):
