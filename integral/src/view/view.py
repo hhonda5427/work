@@ -4,8 +4,8 @@ import datetime
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
 from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent, QIcon
 from PyQt5.QtWidgets import (QTableView, QWidget, QAbstractItemView, 
-                            QGridLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
-                            QStyledItemDelegate, QGraphicsView, QGraphicsScene)
+                            QGridLayout, QHBoxLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
+                            QStyledItemDelegate, QLabel, QGraphicsView, QGraphicsScene)
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
@@ -66,26 +66,49 @@ class ShiftTableWidget(QWidget):
         self.countView.setModel(self.countModel)
         self.countView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.countView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
+        
+        titleHeader = QWidget()
+        titleHeader.setLayout(QHBoxLayout())
+        # strdate=shiftModel.shiftCtrlChannel.shiftCtrl.toHeader_nowMonth()[0]
+        date = datetime.datetime.strptime(shiftModel.shiftCtrlChannel.shiftCtrl.toHeader_nowMonth()[0], '%Y-%m-%d')
+        titleLabel = QLabel(date.strftime('%Y/%m'))
+        font = QFont()
+        font.setPointSize(15)
+        font.setBold(True)
+        font.setItalic(True)
+        titleLabel.setFont(font)
+        titleLabel.setAlignment(Qt.AlignCenter)
+        titleHeader.layout().addWidget(titleLabel)
+        
+        countHeader = QWidget()
+        countHeader.setLayout(QHBoxLayout())
+        label1 = QLabel("連")
+        label2 = QLabel("休")
+        label1.setAlignment(Qt.AlignLeft | Qt.AlignBottom)
+        label2.setAlignment(Qt.AlignLeft | Qt.AlignBottom)
+        countHeader.layout().addWidget(label1)
+        countHeader.layout().addWidget(label2)
+
+        self.baseLayout = QGridLayout()
+        self.baseLayout.setHorizontalSpacing(0)
+        self.baseLayout.setVerticalSpacing(0)
+        self.baseLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.baseLayout.addWidget(self.columnHeaderView, 0, 1)
+        self.baseLayout.addWidget(self.rowHeaderView, 1, 0)
+        self.baseLayout.addWidget(self.scrollView, 1, 1)
+        self.baseLayout.addWidget(self.shiftView, 1, 1)
+        self.baseLayout.addWidget(self.scrollView.horizontalScrollBar(), 2, 1)
+        self.baseLayout.addWidget(self.countView, 1, 2)
+        self.baseLayout.addWidget(self.scrollView.verticalScrollBar(), 1, 3)
+        self.baseLayout.addWidget(titleHeader, 0,0)
+        self.baseLayout.addWidget(countHeader, 0,2)
 
         self.setColumnWidth()
         self.setRowHeight()
         self.setHeaderViewSize()
 
-        layout = QGridLayout()
-        layout.setHorizontalSpacing(0)
-        layout.setVerticalSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        layout.addWidget(self.columnHeaderView, 0, 1)
-        layout.addWidget(self.rowHeaderView, 1, 0)
-        layout.addWidget(self.scrollView, 1, 1)
-        layout.addWidget(self.shiftView, 1, 1)
-        layout.addWidget(self.scrollView.horizontalScrollBar(), 2, 1)
-        layout.addWidget(self.countView, 1, 2)
-        layout.addWidget(self.scrollView.verticalScrollBar(), 1, 3)
-        
-
-        self.setLayout(layout)
+        self.setLayout(self.baseLayout)
         self.setContentsMargins(5, 0, 0, 0)
         self.setMinimumSize(1000, 400)
 
@@ -130,6 +153,7 @@ class ShiftTableWidget(QWidget):
     def setColumnWidth(self):
         staffwidth = [100, 30]
         ncol = self.shiftModel.columnCount()
+
         for col in range(ncol):
             self.columnHeaderView.setColumnWidth(col, COLUMNWIDTH)
             self.shiftView.setColumnWidth(col, COLUMNWIDTH)
@@ -137,7 +161,8 @@ class ShiftTableWidget(QWidget):
             if col < self.rowHeaderModel.columnCount():
                 self.rowHeaderView.setColumnWidth(col, staffwidth[col])
             if col < self.countModel.columnCount():
-                self.countView.setColumnWidth(col, COLUMNWIDTH)
+                self.countView.setColumnWidth(col, COLUMNWIDTH+1)
+
 
     def setRowHeight(self):
         nrow = self.rowHeaderModel.rowCount()
