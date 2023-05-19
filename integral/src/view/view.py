@@ -1,18 +1,18 @@
 import pandas as pd
 import datetime
 
-from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
-from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent, QIcon
+from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant, QSize
+from PyQt5.QtGui import QColor, QResizeEvent, QFont, QStandardItem, QShowEvent
 from PyQt5.QtWidgets import (QTableView, QWidget, QAbstractItemView, 
                             QGridLayout, QHBoxLayout, QSizePolicy, QAbstractScrollArea, QComboBox,
-                            QStyledItemDelegate, QLabel, QGraphicsView, QGraphicsScene)
+                            QStyledItemDelegate, QLabel)
 
 from util.dataSender import DataName
 from util.shiftController import ShiftChannel
 from util.kinnmuCount import *
 
-ROWHEIGHT = 30
-COLUMNWIDTH = 20
+ROWHEIGHT = 15
+COLUMNWIDTH = 15
 
 
 shiftColors = {'A夜':QColor('#7FFFD4'), 'M夜':QColor('#7FFFD4'), 'C夜':QColor('#7FFFD4'),'明':QColor('#00FF00'), 
@@ -34,15 +34,13 @@ class ShiftTableWidget(QWidget):
         self.columnHeaderModel = columnHeaderModel
         self.shiftModel = shiftModel
         self.countModel = countModel
-    
+
         self.columnHeaderView = BaseView()
         self.columnHeaderView.setModel(self.columnHeaderModel)
-        self.columnHeaderView.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.columnHeaderView.horizontalScrollBar().valueChanged.connect(self.SyncHorizontalScrollBar)
 
         self.rowHeaderView = BaseView()
         self.rowHeaderView.setModel(self.rowHeaderModel)
-        # self.rowHeaderView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.rowHeaderView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
         
         self.shiftView = BaseView()
@@ -64,12 +62,10 @@ class ShiftTableWidget(QWidget):
 
         self.countView = BaseView()
         self.countView.setModel(self.countModel)
-        self.countView.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.countView.verticalScrollBar().valueChanged.connect(self.SyncVerticalScrollBar)
         
         titleHeader = QWidget()
         titleHeader.setLayout(QHBoxLayout())
-        # strdate=shiftModel.shiftCtrlChannel.shiftCtrl.toHeader_nowMonth()[0]
         date = datetime.datetime.strptime(shiftModel.shiftCtrlChannel.shiftCtrl.toHeader_nowMonth()[0], '%Y-%m-%d')
         titleLabel = QLabel(date.strftime('%Y/%m'))
         font = QFont()
@@ -104,9 +100,9 @@ class ShiftTableWidget(QWidget):
         self.baseLayout.addWidget(titleHeader, 0,0)
         self.baseLayout.addWidget(countHeader, 0,2)
 
+        
         self.setColumnWidth()
         self.setRowHeight()
-        self.setHeaderViewSize()
 
         self.setLayout(self.baseLayout)
         self.setContentsMargins(5, 0, 0, 0)
@@ -155,35 +151,26 @@ class ShiftTableWidget(QWidget):
         ncol = self.shiftModel.columnCount()
 
         for col in range(ncol):
-            self.columnHeaderView.setColumnWidth(col, COLUMNWIDTH)
-            self.shiftView.setColumnWidth(col, COLUMNWIDTH)
-            self.scrollView.setColumnWidth(col, COLUMNWIDTH)
+            self.columnHeaderView.horizontalHeader().resizeSection(col, COLUMNWIDTH)
+            self.shiftView.horizontalHeader().resizeSection(col, COLUMNWIDTH)
+            self.scrollView.horizontalHeader().resizeSection(col, COLUMNWIDTH)
             if col < self.rowHeaderModel.columnCount():
-                self.rowHeaderView.setColumnWidth(col, staffwidth[col])
+                self.rowHeaderView.horizontalHeader().resizeSection(col, staffwidth[col])
             if col < self.countModel.columnCount():
-                self.countView.setColumnWidth(col, COLUMNWIDTH+1)
-
-
+                self.countView.horizontalHeader().resizeSection(col, COLUMNWIDTH)   
+    
     def setRowHeight(self):
+        
         nrow = self.rowHeaderModel.rowCount()
         for row in range(nrow):
-            self.rowHeaderView.setRowHeight(row, ROWHEIGHT)
-            self.countView.setRowHeight(row, ROWHEIGHT)
-            self.shiftView.setRowHeight(row, ROWHEIGHT)
-            self.scrollView.setRowHeight(row, ROWHEIGHT)
-            if row < self.columnHeaderModel.rowCount():
-                self.columnHeaderView.setRowHeight(row, ROWHEIGHT)
-    
-    def setHeaderViewSize(self):
-        h = 0
-        w = 0
-        for row in range(self.columnHeaderModel.rowCount()):
-            h += self.columnHeaderView.rowHeight(row)
-        self.columnHeaderView.setFixedHeight(h)
+            self.rowHeaderView.verticalHeader().resizeSection(row, ROWHEIGHT)
+            self.countView.verticalHeader().resizeSection(row, ROWHEIGHT)
+            self.shiftView.verticalHeader().resizeSection(row, ROWHEIGHT)
+            self.scrollView.verticalHeader().resizeSection(row, ROWHEIGHT)
 
-        for col in range(self.rowHeaderModel.columnCount()):
-            w += self.rowHeaderView.columnWidth(col)
-        self.rowHeaderView.setFixedWidth(w)
+            if row < self.columnHeaderModel.rowCount():
+                self.columnHeaderView.verticalHeader().resizeSection(row, ROWHEIGHT)
+
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -273,7 +260,7 @@ class BaseView(QTableView):
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.NoSelection)
@@ -281,6 +268,7 @@ class BaseView(QTableView):
         font = QFont()
         font.setPointSize(8)
         self.setFont(font)
+        
 
 class TableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
@@ -360,7 +348,9 @@ class RowHeaderModel(TableModel):
             font.setBold(flg)
             font.setItalic(flg)
             return QVariant(font)
-
+        elif role == Qt.SizeHintRole:
+            return QSize(COLUMNWIDTH, ROWHEIGHT)
+        
     def setData(self, index, value, role):
         
         if index.isValid():
@@ -407,7 +397,10 @@ class ColumnHeaderModel(TableModel):
             font.setBold(flg)
             font.setItalic(flg)
             return QVariant(font)
-
+        
+        elif role == Qt.SizeHintRole:
+            return QSize(COLUMNWIDTH, ROWHEIGHT)
+        
     def setData(self, index, value, role):
         
         if index.isValid():
@@ -462,6 +455,9 @@ class ShiftModel(TableModel):
 
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignCenter 
+        
+        elif role == Qt.SizeHintRole:
+            return QSize(COLUMNWIDTH, ROWHEIGHT)
         return None  
 
     def setData(self, index, value, role=Qt.EditRole):

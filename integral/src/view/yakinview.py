@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QResizeEvent
 from PyQt5.QtWidgets import *
 from util.shiftController import ShiftChannel
 from util.dataSender import DataName
@@ -277,7 +277,17 @@ class nightshiftDialog(QtWidgets.QDialog):
     def fn_get_cell_Value(self, index):
         datas = index.data()
 
+    def getMaximumWidth(self):
+        # get maximum width of the table columns  
+        print(self.view.horizontalHeader().count()) 
+        return self.view.horizontalHeader().length()
+    
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        # print view width and nightshiftdialog width
+        print(self.view.width())
 
+        
 '''
 src = csvファイルを読み込んで成形したデータ
 nightModel = nightshiftdialogで使用しているモデル
