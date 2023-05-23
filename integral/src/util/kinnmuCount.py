@@ -180,7 +180,8 @@ def count_this_row(data,changedRow,iota, want_to_count: ShiftElement):
         ShiftElement.A_NIGHT, 
         ShiftElement.C_NIGHT, 
         ShiftElement.M_NIGHT,
-        ShiftElement.NONE
+        ShiftElement.NONE,
+        ShiftElement.NIGHT_WORK_NEXT
         ]
     max_consective_workdays = count_consecutive_column(nowMonthColumn, workList) 
 

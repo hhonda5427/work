@@ -474,7 +474,7 @@ class ShiftModel(TableModel):
             self._color.iat[index.row(), index.column()] = shiftColors[value]
             
             if value == '勤':
-                self._data.iat[index.row(), index.column()] = ''
+                self._data.iat[index.row(), index.column()] = None
 
             self.rewriteDatabase(index)
 
@@ -486,7 +486,7 @@ class ShiftModel(TableModel):
 
     def rewriteDatabase(self, index):
         # 名前からUIDを取得
-        jobDict = {'休':'10', '勤':'8', '':'8', 'A日':'0', 'M日':'1', 'C日':'2', 'F日':'3', 'A夜':'4', 'M夜':'5', 'C夜':'6', '明':'7'}
+        jobDict = {'休':'10', '勤':'8', '':'8', None:'8', 'A日':'0', 'M日':'1', 'C日':'2', 'F日':'3', 'A夜':'4', 'M夜':'5', 'C夜':'6', '明':'7'}
         uid = int(self.headerData(index.row(), Qt.Vertical, Qt.DisplayRole))
         strdate = self.headerData(index.column(), Qt.Horizontal, Qt.DisplayRole)
         # print(strdate)

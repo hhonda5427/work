@@ -279,13 +279,13 @@ class nightshiftDialog(QtWidgets.QDialog):
 
     def getMaximumWidth(self):
         # get maximum width of the table columns  
-        print(self.view.horizontalHeader().count()) 
+        # print(self.view.horizontalHeader().count()) 
         return self.view.horizontalHeader().length()
     
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         # print view width and nightshiftdialog width
-        print(self.view.width())
+        # print(self.view.width())
 
         
 '''
@@ -542,7 +542,7 @@ class CandidateWidget(QtWidgets.QWidget):
                 elif DFJobKouho1.iloc[i, 1] == 'MT':
                     DFJobKouho1.iloc[i, 2] = len(DFTargetDayStartMTCoreNo)
                     DFJobKouho1.iloc[i, 3] = len(DFTargetDayEndMTCoreNo)
-            print(DFTargetDayStartMRCoreNo)    
+            # print(DFTargetDayStartMRCoreNo)    
             
         # 日勤の場合
         else:
@@ -622,9 +622,11 @@ class CandidateWidget(QtWidgets.QWidget):
         # 連続勤務日計算
         # 勤務以外をNoneへ
         renkin = self.DFkinmuhyou_long.loc[DFJobKouho1["UID"].values.tolist()]
+        print(renkin)
         DFRenkin = renkin.replace(['休', '振', '年', '夏', '特', '暇'], None)
         # 勤務を1へ
         DFRenkin = DFRenkin.replace(['勤', '他','張', '半', 'A夜', 'M夜', 'C夜', '明', 'A日', 'M日', 'C日', 'F日', 'MR', 'TV', 'KS', 'NM', 'AG', 'RT', 'XP', 'CT', 'XO', 'MG', 'MT','FR','XO','AS','ET'], '1')
+        print(DFRenkin)
         # 夜勤入り明へ１
         if self.targetColumn == 0 or self.targetColumn == 1 or self.targetColumn == 2:
             DFRenkin.loc[:, DFJobKouho1.columns[2]] = '1'
@@ -633,6 +635,7 @@ class CandidateWidget(QtWidgets.QWidget):
             DFRenkin.loc[:, DFJobKouho1.columns[2]] = '1'
 
         DFRenkinT = DFRenkin.T  # 転置
+        print(DFRenkin)
         # 空のDF
         DF = pd.DataFrame(index=DFJobKouho1["UID"].values.tolist(), columns=['連続勤務回数'])
         for item in DFRenkinT.columns:  # 遅い
