@@ -393,6 +393,8 @@ class CandidateWidget(QtWidgets.QWidget):
                 self._data.iat[i, j] = value
 
     def createCandidate(self):
+
+        pd.set_option('display.max_rows',None)
         # ダブルクリックしたセルから日付を取得
         targetDayS = self.targetRow
         targetDayE = targetDayS + 1
@@ -400,6 +402,7 @@ class CandidateWidget(QtWidgets.QWidget):
         # self.columnslist[index.column()] in self._closed
         # 取得した日付で勤務表を成形
         DFTargetDaysJob = self._data.iloc[:, [targetDayS, targetDayE]]
+        # print(DFTargetDaysJob)
         # カラム[UID]を追加
         DFTargetDaysJob['UID'] = self._data.index.values.copy()
         # 勤務が休・勤以外は消去する
@@ -443,11 +446,13 @@ class CandidateWidget(QtWidgets.QWidget):
         DFAGCoreNo = DFSkill[(DFSkill['Mo'] == 'AG') & (DFSkill['AG'] == '6')]
         DFMGCoreNo = DFSkill[(DFSkill['Mo'] == 'MG') & (DFSkill['MG'] == '6')]
         DFMTCoreNo = DFSkill[(DFSkill['Mo'] == 'MT') & (DFSkill['MT'] == '6')]
-        
+        # print(DFMRCoreNo)
         # 候補日のコアメンバーの計算
         # 入り・日直
         DFTargetDayStartCoreNo = DFTargetDaysJob.iloc[:, [0, 2]]
-        DFTargetDayStartCoreNo = DFTargetDayStartCoreNo[(DFTargetDayStartCoreNo.iloc[:, 0] == "勤")]
+
+        DFTargetDayStartCoreNo = DFTargetDayStartCoreNo[(DFTargetDayStartCoreNo.iloc[:, 0].isna())]
+
         # RTコア数
         DFTargetDayStartRTCoreNo = pd.merge(DFTargetDayStartCoreNo, DFRtCoreNo, on="UID", how='inner')
         # MRコア数
@@ -473,7 +478,7 @@ class CandidateWidget(QtWidgets.QWidget):
       
         # 明
         DFTargetDayEndCoreNo = DFTargetDaysJob.iloc[:, [1, 2]]
-        DFTargetDayEndCoreNo = DFTargetDayEndCoreNo[(DFTargetDayEndCoreNo.iloc[:, 0] == "勤")]
+        DFTargetDayEndCoreNo = DFTargetDayEndCoreNo[(DFTargetDayEndCoreNo.iloc[:, 0].isna())]
         # RTコア数
         DFTargetDayEndRTCoreNo = pd.merge(DFTargetDayEndCoreNo, DFRtCoreNo, on="UID", how='inner')
         # XOコア数
@@ -496,6 +501,8 @@ class CandidateWidget(QtWidgets.QWidget):
         DFTargetDayEndMGCoreNo = pd.merge(DFTargetDayEndCoreNo, DFMGCoreNo, on="UID", how='inner')
         # MT
         DFTargetDayEndMTCoreNo = pd.merge(DFTargetDayEndCoreNo, DFMTCoreNo, on="UID", how='inner')
+
+        # print(DFTargetDayEndMRCoreNo)
 
         # 勤務候補者へコア数追加
         # 夜勤の場合
@@ -535,6 +542,8 @@ class CandidateWidget(QtWidgets.QWidget):
                 elif DFJobKouho1.iloc[i, 1] == 'MT':
                     DFJobKouho1.iloc[i, 2] = len(DFTargetDayStartMTCoreNo)
                     DFJobKouho1.iloc[i, 3] = len(DFTargetDayEndMTCoreNo)
+            print(DFTargetDayStartMRCoreNo)    
+            
         # 日勤の場合
         else:
             # コア格納列追加
