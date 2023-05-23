@@ -615,7 +615,7 @@ class CandidateWidget(QtWidgets.QWidget):
         renkin = self.DFkinmuhyou_long.loc[DFJobKouho1["UID"].values.tolist()]
         DFRenkin = renkin.replace(['休', '振', '年', '夏', '特', '暇'], None)
         # 勤務を1へ
-        DFRenkin = DFRenkin.replace(['勤', '出', '半', 'A夜', 'M夜', 'C夜', '明', 'A日', 'M日', 'C日', 'F日'], '1')
+        DFRenkin = DFRenkin.replace(['勤', '他','張', '半', 'A夜', 'M夜', 'C夜', '明', 'A日', 'M日', 'C日', 'F日', 'MR', 'TV', 'KS', 'NM', 'AG', 'RT', 'XP', 'CT', 'XO', 'MG', 'MT','FR','XO','AS','ET'], '1')
         # 夜勤入り明へ１
         if self.targetColumn == 0 or self.targetColumn == 1 or self.targetColumn == 2:
             DFRenkin.loc[:, DFJobKouho1.columns[2]] = '1'

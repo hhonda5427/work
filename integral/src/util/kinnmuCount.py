@@ -107,7 +107,7 @@ def count_consecutive_workdays(data, row, columns):
     for i in range(columns):
         value = data.iloc[row, i]
         
-        if value in ['休', '暇', '夏', '特']:
+        if value in ['休', '暇', '夏', '特','年']:
             max_consecutive = max(max_consecutive, current_consecutive)
             current_consecutive = 0
         else:
