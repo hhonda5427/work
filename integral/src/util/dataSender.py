@@ -92,6 +92,48 @@ class DataSender(DataReader):
     #何が言いたいかというと、getYakinFormはdatファイルを読み込んだインスタンスの情報を参照するということ
     getYakinForm = uid2name(getYakinForm_uid)
     
+    #jobPerDayとrequestPerDayを比較して、その日のJobが希望の場合は、trueを日付のvalueとする
+    def getReqestMatch(self) -> pd.DataFrame:
+        df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
+        for uid, person in self.members.items():
+            for strday, day_and_job in zip(self.toHeader_nowMonth(), person.jobPerDay.items()):
+                if day_and_job[1]  in ["4", "5", "6", "0", "1", "2", "3"]:
+                    if pd.notnull(df.at[strday, 3]) and day_and_job[1] == "3":
+                        # strdayがperson.requestPerDayのkeyに含まれている場合、df.at[strday, -3] = True
+                        if strday in person.requestPerDay.keys():
+                            df.at[strday, -3] = True
+                        else:
+                            df.at[strday, -3] = False
+                        
+                    else:
+                        # strdayがperson.requestPerDayのkeyに含まれている場合、df.at[strday, -3] = True
+                        if day_and_job[0] in person.requestPerDay.keys():
+                            df.at[strday, int(day_and_job[1])] = True
+                        else:
+                            df.at[strday, int(day_and_job[1])] = False
+        df = df.rename(columns={4:'A夜', 5:'M夜', 6:'C夜', 0:'A日', 1:'M日', 2:'C日', 3:'F日1', -3:'F日2'})
+        return df.where(df.notna(),'')
+
+
+
+    
+    
+
+#####後々実装予定？requestPerDayは、jobPerDayと同じ形式であることが前提######
+#    # getYakinFormの、jobPerDayではなくrequestPerDayを参照するver
+#    def getYakinForm_request(self) -> pd.DataFrame:
+#        df = pd.DataFrame(None, columns=[4, 5, 6, 0, 1, 2, 3, -3], index=self.toHeader_nowMonth())
+#        for uid, person in self.members.items():
+#            for strday, job in zip(self.toHeader_nowMonth(), person.requestPerDay.values()):
+#                if job  in ["4", "5", "6", "0", "1", "2", "3"]:
+#                    if pd.notnull(df.at[strday, 3]) and job == "3":
+#                        df.at[strday, -3] = uid 
+#                    else:
+#                        df.at[strday, int(job)] = uid
+#                # 
+#        df = df.rename(columns={4:'A夜', 5:'M夜', 6:'C夜', 0:'A日', 1:'M日', 2:'C日', 3:'F日1', -3:'F日2'})
+#        return df.where(df.notna(),'')
+    
     @ConvertTable.id2Name
     def getKinmuForm(self, dataName: DataName) -> pd.DataFrame:
         """ 

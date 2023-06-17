@@ -7,6 +7,7 @@ import os
 import pathlib
 from uuid import uuid4
 
+import pandas as pd
 
 from database.member import *
 from decorator.convertTable import ConvertTable
@@ -157,8 +158,14 @@ class DataReader(Members):
                 print(f'{ex}\n{readDatName}\n {int(day)}')
 
             except ValueError as ex:
-                print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
-                continue
+                print(f'異常なデータがありました\n詳細: {ex}')
+                # ここでコマンドライン上で確認できるようにする
+                response = input('スキップして次を読み込みますか？(y/n)')
+                if response == 'y':
+                    continue
+                else:
+                    #　ここでPULPの再計算なりなんなりをする
+                    raise ValueError
 
             if readDatName == DatNames.shift or readDatName == DatNames.previous:
                 try:

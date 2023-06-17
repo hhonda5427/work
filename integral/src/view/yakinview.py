@@ -33,15 +33,24 @@ class Model(QtCore.QAbstractTableModel):
         # self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
         # self._wordColorのshapeを確認
         # self.matching_cells = []
+    
         self._textColor = pd.DataFrame(data=[[QColor('#000000') for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
+        self._isRequestframe = shiftChannel.shiftCtrl.getReqestMatch()
+
         self._font = pd.DataFrame(data=[[False for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
         # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
         # self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
+        
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
         for i in range(self.rows):
             for j in range(self.cols):
+                # self._isRequestframeの中身がTrueの場合、文字色を赤にする
+                if self._isRequestframe.iloc[i, j]:
+                    self._colorPlace[j][i] = QColor('#6FC1FF')
+        
+                # self._dataframeの中身がdummyの場合、DummyPlaceに追加
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
@@ -81,7 +90,7 @@ class Model(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
             # indexにあるQColorのhex色を確認
             return self._textColor[index.column()][index.row()]
-        
+
         elif role == QtCore.Qt.FontRole:            
             font = QtGui.QFont()   
             flg = self._font.iat[index.row(), index.column()]
