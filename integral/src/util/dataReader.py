@@ -159,6 +159,7 @@ class DataReader(Members):
 
             except ValueError as ex:
                 print(f'異常なデータがありました\n詳細: {ex}')
+                print(f'読み込んだデータ: {row}')
                 # ここでコマンドライン上で確認できるようにする
                 response = input('スキップして次を読み込みますか？(y/n)')
                 if response == 'y':
