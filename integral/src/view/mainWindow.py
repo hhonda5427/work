@@ -58,6 +58,8 @@ class MainWindow(QMainWindow):
         self.yakinView.setWindowTitle('夜勤表')
         
 
+        initializeAction = QAction('初期化', self)
+        initializeAction.triggered.connect(self.initialize)
         registerAction = QAction('登録',self)
         registerAction.triggered.connect(self.register)
         exitAction = QAction('終了', self)
@@ -65,6 +67,7 @@ class MainWindow(QMainWindow):
 
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('ファイル')
+        fileMenu.addAction(initializeAction)
         fileMenu.addAction(registerAction)
         fileMenu.addAction(exitAction)
 
@@ -85,14 +88,33 @@ class MainWindow(QMainWindow):
     def replaceTable(self):
 
         display_count = QApplication.desktop().screenCount()
+        
+        # if dual monitor, display second monitor
         #デュアルモニタの場合はモニタ2に優先して出力する
         if display_count > 1:
             display = QApplication.screens()[1].availableGeometry()
+            dpi = QApplication.screens()[1].physicalDotsPerInch()
+            dpi_ratio = QApplication.screens()[1].devicePixelRatio()
         else:
             display = QApplication.primaryScreen().availableGeometry()
-        self.setGeometry(10, 50, 400, 100)
-        self.yakinView.setGeometry(0, 200, int(display.width()*0.4), int(display.height()-210))
-        self.shiftView.setGeometry(int(display.width()*0.4), 200, int(display.width()*0.6), int(display.height()-210))
+            dpi = QApplication.primaryScreen().physicalDotsPerInch()
+            dpi_ratio = QApplication.screens()[0].devicePixelRatio()
+        #選択したディスプレイの左上のアドレスを取得する
+        display_x = display.x()
+        display_y = display.y()
+
+        self.setGeometry(display_x+10, display_y+50, 400, 100)
+
+        yakinview_width = int(display.width()*0.29)
+        shiftview_width = int(display.width()*0.71)
+        # maxYakinViewWidth = self.yakinView.getMaximumWidth()
+
+        # if  maxYakinViewWidth < display.width()*0.4:
+        #     yakinview_width = maxYakinViewWidth
+        #     shiftview_width = display.width() - yakinview_width
+
+        self.yakinView.setGeometry(display_x+0, display_y+200, yakinview_width, int(display.height()-210))
+        self.shiftView.setGeometry(display_x+yakinview_width, display_y+200, shiftview_width, int(display.height()-210))
 
     def showTable(self, view):
 
@@ -132,6 +154,15 @@ class MainWindow(QMainWindow):
             self.shiftChannel.shiftCtrl.send2accdb()
         elif ret == QMessageBox.No:
             pass
+    
+    def initialize(self):
+        print("initialize")
+        ret = QMessageBox.information(None, "初期化確認", "勤務表を初期化しますか",
+                                        QMessageBox.Yes, QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            self.shiftChannel.shiftCtrl.send2accdb(isRequestOnly=True)
+        elif ret == QMessageBox.No:
+            return
 
 
 # class MemberElemObserver(Observer):

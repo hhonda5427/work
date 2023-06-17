@@ -107,7 +107,7 @@ def count_consecutive_workdays(data, row, columns):
     for i in range(columns):
         value = data.iloc[row, i]
         
-        if value in ['休', '暇', '夏', '特']:
+        if value in ['休', '暇', '夏', '特','年']:
             max_consecutive = max(max_consecutive, current_consecutive)
             current_consecutive = 0
         else:
@@ -180,7 +180,8 @@ def count_this_row(data,changedRow,iota, want_to_count: ShiftElement):
         ShiftElement.A_NIGHT, 
         ShiftElement.C_NIGHT, 
         ShiftElement.M_NIGHT,
-        ShiftElement.NONE
+        ShiftElement.NONE,
+        ShiftElement.NIGHT_WORK_NEXT
         ]
     max_consective_workdays = count_consecutive_column(nowMonthColumn, workList) 
 

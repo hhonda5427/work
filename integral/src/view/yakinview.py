@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QResizeEvent
 from PyQt5.QtWidgets import *
 from util.shiftController import ShiftChannel
 from util.dataSender import DataName
@@ -33,15 +33,24 @@ class Model(QtCore.QAbstractTableModel):
         # self._wordColor =  {col: {row: QColor('#000000') for row in range(self.rows)} for col in range(self.cols)}
         # self._wordColorのshapeを確認
         # self.matching_cells = []
+    
         self._textColor = pd.DataFrame(data=[[QColor('#000000') for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
+        self._isRequestframe = shiftChannel.shiftCtrl.getReqestMatch()
+
         self._font = pd.DataFrame(data=[[False for j in range(len(self._dataframe.columns))] for i in range(len(self._dataframe))])
         # self.shiftChanel.shiftCtrl.membersのすべてのkeyに対して、wordColorGenを実行し、辞書を生成
         # self.wordColorDict = {uid: self.wordColorGen(uid) for uid in self.shiftChannel.shiftCtrl.members.keys()}
+        
 
         # Dummyの場所（編集できる場所）
         self.DummyPlace = []
         for i in range(self.rows):
             for j in range(self.cols):
+                # self._isRequestframeの中身がTrueの場合、文字色を赤にする
+                if self._isRequestframe.iloc[i, j]:
+                    self._colorPlace[j][i] = QColor('#6FC1FF')
+        
+                # self._dataframeの中身がdummyの場合、DummyPlaceに追加
                 if 'dummy' in self._dataframe.iloc[i, j]:
                     dummy_place = (i, j)
                     self.DummyPlace.append(dummy_place)
@@ -81,7 +90,7 @@ class Model(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.ItemDataRole.ForegroundRole:
             # indexにあるQColorのhex色を確認
             return self._textColor[index.column()][index.row()]
-        
+
         elif role == QtCore.Qt.FontRole:            
             font = QtGui.QFont()   
             flg = self._font.iat[index.row(), index.column()]
@@ -277,7 +286,17 @@ class nightshiftDialog(QtWidgets.QDialog):
     def fn_get_cell_Value(self, index):
         datas = index.data()
 
+    def getMaximumWidth(self):
+        # get maximum width of the table columns  
+        # print(self.view.horizontalHeader().count()) 
+        return self.view.horizontalHeader().length()
+    
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        # print view width and nightshiftdialog width
+        # print(self.view.width())
 
+        
 '''
 src = csvファイルを読み込んで成形したデータ
 nightModel = nightshiftdialogで使用しているモデル
@@ -383,6 +402,8 @@ class CandidateWidget(QtWidgets.QWidget):
                 self._data.iat[i, j] = value
 
     def createCandidate(self):
+
+        pd.set_option('display.max_rows',None)
         # ダブルクリックしたセルから日付を取得
         targetDayS = self.targetRow
         targetDayE = targetDayS + 1
@@ -390,6 +411,7 @@ class CandidateWidget(QtWidgets.QWidget):
         # self.columnslist[index.column()] in self._closed
         # 取得した日付で勤務表を成形
         DFTargetDaysJob = self._data.iloc[:, [targetDayS, targetDayE]]
+        # print(DFTargetDaysJob)
         # カラム[UID]を追加
         DFTargetDaysJob['UID'] = self._data.index.values.copy()
         # 勤務が休・勤以外は消去する
@@ -433,11 +455,13 @@ class CandidateWidget(QtWidgets.QWidget):
         DFAGCoreNo = DFSkill[(DFSkill['Mo'] == 'AG') & (DFSkill['AG'] == '6')]
         DFMGCoreNo = DFSkill[(DFSkill['Mo'] == 'MG') & (DFSkill['MG'] == '6')]
         DFMTCoreNo = DFSkill[(DFSkill['Mo'] == 'MT') & (DFSkill['MT'] == '6')]
-        
+        # print(DFMRCoreNo)
         # 候補日のコアメンバーの計算
         # 入り・日直
         DFTargetDayStartCoreNo = DFTargetDaysJob.iloc[:, [0, 2]]
-        DFTargetDayStartCoreNo = DFTargetDayStartCoreNo[(DFTargetDayStartCoreNo.iloc[:, 0] == "勤")]
+
+        DFTargetDayStartCoreNo = DFTargetDayStartCoreNo[(DFTargetDayStartCoreNo.iloc[:, 0].isna())]
+
         # RTコア数
         DFTargetDayStartRTCoreNo = pd.merge(DFTargetDayStartCoreNo, DFRtCoreNo, on="UID", how='inner')
         # MRコア数
@@ -463,7 +487,7 @@ class CandidateWidget(QtWidgets.QWidget):
       
         # 明
         DFTargetDayEndCoreNo = DFTargetDaysJob.iloc[:, [1, 2]]
-        DFTargetDayEndCoreNo = DFTargetDayEndCoreNo[(DFTargetDayEndCoreNo.iloc[:, 0] == "勤")]
+        DFTargetDayEndCoreNo = DFTargetDayEndCoreNo[(DFTargetDayEndCoreNo.iloc[:, 0].isna())]
         # RTコア数
         DFTargetDayEndRTCoreNo = pd.merge(DFTargetDayEndCoreNo, DFRtCoreNo, on="UID", how='inner')
         # XOコア数
@@ -486,6 +510,8 @@ class CandidateWidget(QtWidgets.QWidget):
         DFTargetDayEndMGCoreNo = pd.merge(DFTargetDayEndCoreNo, DFMGCoreNo, on="UID", how='inner')
         # MT
         DFTargetDayEndMTCoreNo = pd.merge(DFTargetDayEndCoreNo, DFMTCoreNo, on="UID", how='inner')
+
+        # print(DFTargetDayEndMRCoreNo)
 
         # 勤務候補者へコア数追加
         # 夜勤の場合
@@ -525,6 +551,8 @@ class CandidateWidget(QtWidgets.QWidget):
                 elif DFJobKouho1.iloc[i, 1] == 'MT':
                     DFJobKouho1.iloc[i, 2] = len(DFTargetDayStartMTCoreNo)
                     DFJobKouho1.iloc[i, 3] = len(DFTargetDayEndMTCoreNo)
+            # print(DFTargetDayStartMRCoreNo)    
+            
         # 日勤の場合
         else:
             # コア格納列追加
@@ -603,9 +631,11 @@ class CandidateWidget(QtWidgets.QWidget):
         # 連続勤務日計算
         # 勤務以外をNoneへ
         renkin = self.DFkinmuhyou_long.loc[DFJobKouho1["UID"].values.tolist()]
+        print(renkin)
         DFRenkin = renkin.replace(['休', '振', '年', '夏', '特', '暇'], None)
         # 勤務を1へ
-        DFRenkin = DFRenkin.replace(['勤', '出', '半', 'A夜', 'M夜', 'C夜', '明', 'A日', 'M日', 'C日', 'F日'], '1')
+        DFRenkin = DFRenkin.replace(['勤', '他','張', '半', 'A夜', 'M夜', 'C夜', '明', 'A日', 'M日', 'C日', 'F日', 'MR', 'TV', 'KS', 'NM', 'AG', 'RT', 'XP', 'CT', 'XO', 'MG', 'MT','FR','XO','AS','ET'], '1')
+        print(DFRenkin)
         # 夜勤入り明へ１
         if self.targetColumn == 0 or self.targetColumn == 1 or self.targetColumn == 2:
             DFRenkin.loc[:, DFJobKouho1.columns[2]] = '1'
@@ -614,6 +644,7 @@ class CandidateWidget(QtWidgets.QWidget):
             DFRenkin.loc[:, DFJobKouho1.columns[2]] = '1'
 
         DFRenkinT = DFRenkin.T  # 転置
+        print(DFRenkin)
         # 空のDF
         DF = pd.DataFrame(index=DFJobKouho1["UID"].values.tolist(), columns=['連続勤務回数'])
         for item in DFRenkinT.columns:  # 遅い
